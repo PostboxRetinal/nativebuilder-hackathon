@@ -18,7 +18,7 @@ Browser (React + Vite + Tailwind)
 - Auth: `src/contexts/AuthContext.tsx` + `src/components/AuthScreen.tsx`
 - Voice: `src/components/VoiceInput.tsx` + `src/hooks/useSpeechmatics.ts`
 - DB client: `src/lib/supabase.ts` (types in `src/lib/database.types.ts`)
-- Design: dark theme, dotgrid-glow background, Inter font
+- Design: dark theme, dotgrid-glow background, system-ui font
 
 ### Backend (Supabase, not in this repo)
 - **speechmatics-token** Edge Function: mints JWTs for Speechmatics WebSocket

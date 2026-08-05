@@ -1,11 +1,11 @@
 {
-  "name": "my-app",
+  "name": "devvoice",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "NODE_OPTIONS='--max-old-space-size=128' vite",
-    "build": "NODE_OPTIONS='--max-old-space-size=100' vite build",
+    "dev": "bunx --bun vite",
+    "build": "bunx --bun vite build",
     "preview": "vite preview"
   },
   "dependencies": {
