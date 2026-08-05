@@ -1,62 +1,53 @@
-import { useCallback, useState } from "react";
-import { AuthProvider, useAuth } from "./contexts/AuthContext";
-import AuthScreen from "./components/AuthScreen";
-import { useConversations } from "./hooks/useConversations";
-import ConversationSidebar from "./components/ConversationSidebar";
-import ConversationView from "./components/ConversationView";
+import React, { useState, useCallback } from 'react';
+import { useAuth } from './contexts/AuthContext';
+import { useConversations } from './hooks/useConversations';
+import AuthScreen from './components/AuthScreen';
+import ConversationSidebar from './components/ConversationSidebar';
+import ConversationView from './components/ConversationView';
 
-export default function App() {
-  return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
-  );
-}
-
-function AppContent() {
-  const { user, loading } = useAuth();
+const App: React.FC = (): JSX.Element => {
+  const { isAuthenticated } = useAuth();
   const { createConversation } = useConversations();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
 
-  const handleCreateNew = useCallback(async () => {
-    const id = await createConversation();
-    if (id != null) {
-      setSelectedId(id);
+  const handleSelectConversation = useCallback((id: string): void => {
+    setSelectedConversationId(id);
+  }, []);
+
+  const handleCreateNew = useCallback(async (): Promise<void> => {
+    try {
+      const newId = await createConversation();
+      setSelectedConversationId(newId);
+    } catch (error) {
+      console.error('Failed to create conversation:', error);
     }
   }, [createConversation]);
 
-  if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-black">
-        <div
-          className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-700 border-t-white"
-          role="status"
-          aria-label="Loading"
-        />
-      </div>
-    );
-  }
-
-  if (user == null) {
+  if (!isAuthenticated) {
     return <AuthScreen />;
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-black">
+    <div className="flex h-screen w-full bg-black text-white overflow-hidden">
       <ConversationSidebar
-        selectedConversationId={selectedId}
-        onSelectConversation={setSelectedId}
+        selectedConversationId={selectedConversationId}
+        onSelectConversation={handleSelectConversation}
         onCreateNew={handleCreateNew}
       />
-      <div className="flex flex-1 flex-col">
-        {selectedId != null ? (
-          <ConversationView conversationId={selectedId} />
+      <main className="flex-1 relative flex items-center justify-center">
+        {selectedConversationId ? (
+          <ConversationView
+            conversationId={selectedConversationId}
+            onBack={() => setSelectedConversationId(null)}
+          />
         ) : (
-          <div className="flex flex-1 items-center justify-center text-zinc-500">
-            Select a conversation or start a new one
+          <div className="text-zinc-500 text-center">
+            <p>Select a conversation or create a new one</p>
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
-}
+};
+
+export default App;

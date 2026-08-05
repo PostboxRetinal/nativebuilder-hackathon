@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { useMessages } from "../hooks/useMessages";
 import { useConversations } from "../hooks/useConversations";
 import MessageList from "./MessageList";
@@ -6,70 +6,102 @@ import VoiceInput from "./VoiceInput";
 
 interface ConversationViewProps {
   conversationId: string;
+  onBack: () => void;
 }
 
 function ConversationView({
   conversationId,
+  onBack,
 }: ConversationViewProps): React.ReactNode {
-  const { addMessage } = useMessages(conversationId);
+  const { messages, addMessage } = useMessages(conversationId);
   const { conversations, updateTitle } = useConversations();
-  const [textInput, setTextInput] = useState("");
-  const isFirstMessage = useRef(true);
+
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
 
   const conversation = conversations.find((c) => c.id === conversationId);
   const currentTitle = conversation?.title ?? "New Conversation";
 
-  const sendMessage = useCallback(
+  const handleSendMessage = useCallback(
     async (text: string) => {
       const trimmed = text.trim();
-      if (trimmed.length === 0) return;
+      if (!trimmed) return;
+
+      const isFirstMessage = messages.length === 0;
 
       await addMessage("user", trimmed);
 
-      // Auto-title on first user message.
-      if (isFirstMessage.current) {
-        isFirstMessage.current = false;
+      console.log("[Edge Function] Triggering research for:", trimmed);
+
+      if (isFirstMessage) {
         await updateTitle(conversationId, trimmed.slice(0, 30));
       }
-
-      // Research EF placeholder (wired in Task 7).
-      console.log("[Research] Triggering for:", trimmed);
     },
-    [conversationId, addMessage, updateTitle],
+    [conversationId, messages.length, addMessage, updateTitle],
   );
 
-  const handleSubmit = useCallback(
-    (e: React.FormEvent) => {
-      e.preventDefault();
-      if (textInput.trim().length === 0) return;
-      sendMessage(textInput);
-      setTextInput("");
-    },
-    [textInput, sendMessage],
-  );
+  const handleTitleBlur = useCallback(async () => {
+    setIsEditingTitle(false);
+    if (editTitle && editTitle !== currentTitle) {
+      await updateTitle(conversationId, editTitle);
+    }
+  }, [conversationId, editTitle, currentTitle, updateTitle]);
+
+  const handleTitleDoubleClick = useCallback(() => {
+    setEditTitle(currentTitle);
+    setIsEditingTitle(true);
+  }, [currentTitle]);
 
   return (
-    <div className="flex h-full flex-col bg-black text-white">
-      {/* Top bar */}
+    <div className="flex h-full w-full flex-col bg-black text-white">
       <header className="flex items-center gap-4 border-b border-zinc-800 p-4">
-        <h1 className="text-lg font-medium">{currentTitle}</h1>
+        <button
+          onClick={onBack}
+          className="p-2 transition-colors hover:bg-zinc-900 rounded-full"
+          aria-label="Go back"
+        >
+          <span className="text-lg">&larr;</span>
+        </button>
+        {isEditingTitle ? (
+          <input
+            autoFocus
+            className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1 outline-none"
+            value={editTitle}
+            onChange={(e) => setEditTitle(e.target.value)}
+            onBlur={handleTitleBlur}
+            onKeyDown={(e) => e.key === "Enter" && handleTitleBlur()}
+          />
+        ) : (
+          <h1
+            onDoubleClick={handleTitleDoubleClick}
+            className="cursor-pointer text-lg font-medium transition-colors hover:text-zinc-400"
+          >
+            {currentTitle}
+          </h1>
+        )}
       </header>
 
-      {/* Messages */}
       <main className="flex-1 overflow-hidden">
         <MessageList conversationId={conversationId} />
       </main>
 
-      {/* Input */}
-      <footer className="border-t border-zinc-800 p-4">
+      <footer className="border-t border-zinc-800 bg-black p-4">
         <div className="mx-auto flex max-w-4xl flex-col gap-4">
-          <VoiceInput onTranscriptFinal={sendMessage} />
-          <form onSubmit={handleSubmit} className="flex gap-2">
+          <VoiceInput onTranscriptFinal={handleSendMessage} />
+          <form
+            className="flex gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const form = e.currentTarget as HTMLFormElement;
+              const input = form.elements.namedItem(
+                "message",
+              ) as HTMLInputElement;
+              handleSendMessage(input.value);
+              input.value = "";
+            }}
+          >
             <input
-              key="message-input"
-              type="text"
-              value={textInput}
-              onChange={(e) => setTextInput(e.target.value)}
+              name="message"
               placeholder="Type a message..."
               className="flex-1 rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-2 outline-none transition-colors focus:border-zinc-600"
             />
