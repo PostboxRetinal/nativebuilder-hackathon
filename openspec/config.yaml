@@ -1,0 +1,24 @@
+schema: spec-driven
+
+context: |
+  DevVoice — Voice-powered developer research assistant for native.builder hackathon.
+  Tech stack: React 19, TypeScript, Vite, Tailwind CSS, Supabase (DB + Edge Functions + Auth)
+  External APIs: Speechmatics (real-time STT), Bright Data (research), AI/ML API (answer gen)
+  Environment: Natively web container (memory-limited, no minify, no treeshake)
+  Conventions:
+    - src/lib/ for shared utilities (supabase.ts, database.types.ts)
+    - src/hooks/ for custom React hooks
+    - src/components/ for UI components
+    - src/contexts/ for React context providers
+    - Dark theme (Tailwind), AMOLED black preferred
+    - All secrets server-side (Edge Functions), never exposed to browser
+    - Database types from database.types.ts for type safety
+    - Supabase client from src/lib/supabase.ts
+
+rules:
+  tasks:
+    - Break tasks into testable units
+    - Include file paths for every change
+  proposal:
+    - Keep under 500 words
+    - Include non-goals section

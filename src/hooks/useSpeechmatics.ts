@@ -29,9 +29,11 @@ export function useSpeechmatics(): UseSpeechmaticsReturn {
   const streamRef = useRef<MediaStream | null>(null);
   const processorRef = useRef<ScriptProcessorNode | null>(null);
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const stateRef = useRef<RecordingState>("idle");
 
   // Accumulate final transcript fragments as they come in
   const transcriptAccRef = useRef("");
+  useEffect(() => { stateRef.current = state; }, [state]);
 
   const cleanup = useCallback(() => {
     // Close WebSocket
@@ -239,7 +241,7 @@ export function useSpeechmatics(): UseSpeechmaticsReturn {
       };
 
       ws.onerror = () => {
-        if (state !== "done") {
+        if (stateRef.current !== "done") {
           setError("Connection lost. Tap to retry.");
           setState("error");
           cleanup();
