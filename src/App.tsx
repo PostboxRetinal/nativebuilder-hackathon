@@ -1,5 +1,9 @@
+import { useCallback, useState } from "react";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import AuthScreen from "./components/AuthScreen";
+import { useConversations } from "./hooks/useConversations";
+import ConversationSidebar from "./components/ConversationSidebar";
+import ConversationView from "./components/ConversationView";
 
 export default function App() {
   return (
@@ -10,13 +14,22 @@ export default function App() {
 }
 
 function AppContent() {
-  const { user, loading, signOut } = useAuth();
+  const { user, loading } = useAuth();
+  const { createConversation } = useConversations();
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const handleCreateNew = useCallback(async () => {
+    const id = await createConversation();
+    if (id != null) {
+      setSelectedId(id);
+    }
+  }, [createConversation]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-dotgrid-glow flex items-center justify-center">
+      <div className="flex h-screen items-center justify-center bg-black">
         <div
-          className="w-8 h-8 border-2 border-muted border-t-primary rounded-full animate-spin"
+          className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-700 border-t-white"
           role="status"
           aria-label="Loading"
         />
@@ -24,25 +37,25 @@ function AppContent() {
     );
   }
 
-  if (!user) {
+  if (user == null) {
     return <AuthScreen />;
   }
 
   return (
-    <div className="min-h-screen bg-dotgrid-glow flex items-center justify-center p-4">
-      <div className="text-center">
-        <h1 className="text-2xl font-semibold text-foreground mb-2">
-          Welcome, {user.email}
-        </h1>
-        <p className="text-sm text-muted mb-6">
-          You're signed in. The conversation UI is coming next.
-        </p>
-        <button
-          onClick={signOut}
-          className="py-2 px-5 rounded-lg bg-muted border border-border text-foreground text-sm font-medium transition-all duration-150 hover:bg-border active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-        >
-          Sign Out
-        </button>
+    <div className="flex h-screen overflow-hidden bg-black">
+      <ConversationSidebar
+        selectedConversationId={selectedId}
+        onSelectConversation={setSelectedId}
+        onCreateNew={handleCreateNew}
+      />
+      <div className="flex flex-1 flex-col">
+        {selectedId != null ? (
+          <ConversationView conversationId={selectedId} />
+        ) : (
+          <div className="flex flex-1 items-center justify-center text-zinc-500">
+            Select a conversation or start a new one
+          </div>
+        )}
       </div>
     </div>
   );

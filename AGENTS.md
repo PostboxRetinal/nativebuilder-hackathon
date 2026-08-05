@@ -61,6 +61,19 @@ pnpm build            # production build (100MB limit)
 - Component files: PascalCase, one component per file
 - Custom hooks: `use*` prefix, lowercase
 
+### TypeScript Best Practices
+- No `any` — use `unknown` and narrow with type guards
+- Null/undefined: use `!= null` checks (catches both); never rely on truthiness for strings or numbers
+- Explicit return types on all exported functions
+- `const` over `let`; no `var`
+- Discriminated unions for state machines; exhaustive checks with `never`
+- `useCallback` on all functions passed as props or used in dependency arrays
+- `useRef` for persistent mutable values (channels, timers, IDs)
+- useEffect cleanup: always return cleanup; use `cancelled` flag for async operations
+- Supabase real-time: `useRef` for channel + `supabase.removeChannel()` in cleanup
+- Relative imports only (no `@/` alias)
+- `satisfies` operator for literal type inference
+
 ## Project Status
 
 ### Completed (Tasks 1-5)
