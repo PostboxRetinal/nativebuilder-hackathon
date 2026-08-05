@@ -1,26 +1,63 @@
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-/* THESE ARE PLACEHOLDER FOR EMPTY APP, FEEL FREE TO REPLACE WITH DESIRED DESIGN */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@theme {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --color-text-muted: oklch(0.9015 0.0154 241.79);
+@layer base {
+  *,
+  *::before,
+  *::after {
+    border-color: #334155;
+  }
 }
 
-.bg-dotgrid-glow {
-  background-color: oklch(0.1638 0 0);
-  background-image:
-    radial-gradient(
-      circle at 50% 118%,
-      oklch(0.41 0.14 250 / 45%) 0%,
-      oklch(0.41 0.14 250 / 22%) 22%,
-      oklch(0.41 0.14 250 / 10%) 32%,
-      oklch(0.41 0.14 250 / 4%) 38%,
-      transparent 45%
-    ),
-    radial-gradient(oklch(0.41 0.14 250 / 4%) 1px, transparent 1px);
-  background-size:
-    100% 100%,
-    16px 16px;
-  background-position: center, center;
+@layer utilities {
+  .bg-dotgrid-glow {
+    background-color: #020617;
+    background-image:
+      radial-gradient(
+        circle at 50% 118%,
+        rgba(59, 130, 246, 0.45) 0%,
+        rgba(59, 130, 246, 0.22) 22%,
+        rgba(59, 130, 246, 0.10) 32%,
+        rgba(59, 130, 246, 0.04) 38%,
+        transparent 45%
+      ),
+      radial-gradient(rgba(59, 130, 246, 0.04) 1px, transparent 1px);
+    background-size:
+      100% 100%,
+      16px 16px;
+    background-position: center, center;
+  }
+}
+
+@keyframes pulse-recording {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 16px rgba(239, 68, 68, 0.3);
+  }
+  50% {
+    transform: scale(1.06);
+    box-shadow: 0 0 32px rgba(239, 68, 68, 0.5);
+  }
+}
+
+@keyframes pulse-recording-reduced {
+  0%, 100% {
+    box-shadow: 0 0 16px rgba(239, 68, 68, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 32px rgba(239, 68, 68, 0.5);
+  }
+}
+
+.animate-pulse-recording {
+  animation: pulse-recording 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-recording {
+    animation: pulse-recording-reduced 1.6s ease-in-out infinite;
+  }
 }
