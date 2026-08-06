@@ -6,6 +6,10 @@ logs
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
+bun.lock
+
+# Build artifacts
+tsconfig.tsbuildinfo
 
 node_modules
 dist
