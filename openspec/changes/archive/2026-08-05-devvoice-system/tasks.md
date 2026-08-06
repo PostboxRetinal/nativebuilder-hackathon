@@ -1,7 +1,8 @@
 ## 1. SDD Documentation
 
-- [ ] 1.1 Validate all 5 spec files format compliance (completed via `openspec validate`)
-- [ ] 1.2 Archive change to sync delta specs to main specs (`openspec/specs/`)
+- [x] 1.1 Validate all 5 spec files format compliance (completed via `openspec validate --all` — 5 passed, 0 failed)
+- [x] 1.2 Archive change to sync delta specs to main specs (`openspec/specs/`)
+- [x] 1.3 OpenSpec CLI updated to v1.8.0
 
 ## 2. Remaining Implementation (Task 6 - Conversation UI + Data Layer)
 

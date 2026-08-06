@@ -76,16 +76,22 @@ pnpm build            # production build (100MB limit)
 
 ## Project Status
 
-### Completed (Tasks 1-5)
+### Completed
 1. Supabase Foundation (schema, RLS, types, auth config)
 2. Speechmatics Token Edge Function
 3. Research Edge Function (Bright Data + AI/ML API tool loop)
 4. Auth UI + Supabase Client
 5. Voice Input + Real-time Transcription
+6. Conversation Data Layer: `useConversations.ts`, `useMessages.ts`
+7. Conversation UI: `ConversationSidebar.tsx`, `MessageList.tsx`, `ConversationView.tsx`
+8. App Assembly: AuthProvider > AuthGate > Sidebar + MessageList + VoiceInput layout
 
-### Pending (Tasks 6-7)
-6. **Conversation UI + Data Layer**: `useConversations.ts`, `useMessages.ts`, `ConversationSidebar.tsx`, `MessageList.tsx`, `ConversationView.tsx`
-7. **App Assembly**: Wire everything in `App.tsx`, research pipeline integration, auto-title, navigation, polish
+### Pending
+- `SourceCitation.tsx` — clickable citation card with title, favicon, snippet
+- `useResearch.ts` — research call hook wired to Edge Function
+- Wire VoiceInput submit to research pipeline
+- Wire research results to active conversation
+- End-to-end flow test: auth -> record -> transcribe -> submit research -> see answer with sources
 
 ### Known Bugs
 - `tsconfig.json`: `erasableSyntaxOnly` is not a valid TypeScript option (line 21)
@@ -95,16 +101,21 @@ pnpm build            # production build (100MB limit)
 
 ```
 src/
-  App.tsx                    # Main app, auth routing, placeholder for conversation UI
+  App.tsx                    # Main app: AuthProvider > AuthGate > Sidebar + MessageList + VoiceInput
   main.tsx                   # Entry point
   index.css                  # Tailwind + custom utilities (dotgrid-glow, pulse animation)
   components/
     AuthScreen.tsx           # Sign in / sign up UI
     VoiceInput.tsx           # Mic button + transcription + edit flow
+    ConversationSidebar.tsx  # Conversation list, new button, delete
+    MessageList.tsx          # Message bubbles with role-based styling
+    ConversationView.tsx     # Conversation layout with top bar, messages, input
   contexts/
     AuthContext.tsx          # Auth state, signIn/signUp/signOut
   hooks/
     useSpeechmatics.ts       # WebSocket client for Speechmatics STT
+    useConversations.ts      # Conversation CRUD data hook
+    useMessages.ts           # Message list hook with upsert + order_index
   lib/
     supabase.ts              # Supabase client instance
     database.types.ts        # Generated DB types
