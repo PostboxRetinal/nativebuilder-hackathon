@@ -110,21 +110,14 @@ export function useConversations(): UseConversationsReturn {
 
   const deleteConversation = useCallback(
     async (id: string): Promise<void> => {
-      const { error: msgErr } = await supabase
-        .from("messages")
-        .delete()
-        .eq("conversation_id", id);
-      if (msgErr != null) {
-        console.error("[useConversations] delete messages error:", msgErr);
-        return;
-      }
-
-      const { error: convErr } = await supabase
+      const { error } = await supabase
         .from("conversations")
         .delete()
-        .eq("id", id);
-      if (convErr != null) {
-        console.error("[useConversations] delete conversation error:", convErr);
+        .eq("id", id)
+        .select();
+
+      if (error != null) {
+        console.error("[useConversations] delete conversation error:", error);
       }
     },
     [],

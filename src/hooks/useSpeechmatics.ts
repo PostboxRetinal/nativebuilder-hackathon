@@ -30,12 +30,18 @@ export function useSpeechmatics(): UseSpeechmaticsReturn {
   const processorRef = useRef<ScriptProcessorNode | null>(null);
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const stateRef = useRef<RecordingState>("idle");
+  const stopTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Accumulate final transcript fragments as they come in
   const transcriptAccRef = useRef("");
   useEffect(() => { stateRef.current = state; }, [state]);
 
   const cleanup = useCallback(() => {
+    if (stopTimeoutRef.current) {
+      clearTimeout(stopTimeoutRef.current);
+      stopTimeoutRef.current = null;
+    }
+
     // Close WebSocket
     if (wsRef.current) {
       const ws = wsRef.current;
@@ -91,6 +97,11 @@ export function useSpeechmatics(): UseSpeechmaticsReturn {
   }, [cleanup]);
 
   const startRecording = useCallback(async () => {
+    if (stopTimeoutRef.current) {
+      clearTimeout(stopTimeoutRef.current);
+      stopTimeoutRef.current = null;
+    }
+
     setState("idle");
     setPartialText("");
     setFinalText("");
@@ -278,14 +289,16 @@ export function useSpeechmatics(): UseSpeechmaticsReturn {
     // Don't close the socket yet — we need to wait for EndOfTranscript
     // Speechmatics will close it after sending EndOfTranscript.
     // But we set a safety timeout:
-    setTimeout(() => {
+    stopTimeoutRef.current = setTimeout(() => {
       if (wsRef.current) {
         cleanup();
-        if (transcriptAccRef.current) {
-          setState("done");
-        } else {
-          setError("Transcription timed out. Please try again.");
-          setState("error");
+        if (stateRef.current === "processing") {
+          if (transcriptAccRef.current) {
+            setState("done");
+          } else {
+            setError("Transcription timed out. Please try again.");
+            setState("error");
+          }
         }
       }
     }, 8000);

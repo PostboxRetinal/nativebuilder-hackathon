@@ -4,7 +4,9 @@ import type { Database } from "../lib/database.types";
 
 type MessageRow = Database["public"]["Tables"]["messages"]["Row"];
 
-type Message = Pick<MessageRow, "id" | "role" | "content" | "created_at">;
+type Message = Pick<MessageRow, "id" | "role" | "content" | "created_at"> & {
+  order_index: number;
+};
 
 type UseMessagesReturn = {
   messages: Message[];
@@ -22,12 +24,12 @@ export function useMessages(
   async function fetchMessages(): Promise<Message[] | null> {
     const { data, error } = await supabase
       .from("messages")
-      .select("id, role, content, created_at")
+      .select("id, role, content, created_at, order_index")
       .eq("conversation_id", conversationId)
-      .order("created_at", { ascending: true });
+      .order("order_index", { ascending: true });
 
     if (error != null) throw error;
-    return data;
+    return data as Message[] | null;
   }
 
   useEffect(() => {
@@ -87,16 +89,28 @@ export function useMessages(
 
   const addMessage = useCallback(
     async (role: MessageRow["role"], content: string): Promise<void> => {
+      // Calculate next order_index
+      const { data: lastMessage } = await supabase
+        .from("messages")
+        .select("order_index")
+        .eq("conversation_id", conversationId)
+        .order("order_index", { ascending: false })
+        .limit(1)
+        .single();
+
+      const nextIndex = (lastMessage?.order_index ?? messages.length) + 1;
+
       const { error } = await supabase.from("messages").insert({
         conversation_id: conversationId,
         role,
         content,
+        order_index: nextIndex,
       });
       if (error != null) {
         console.error("[useMessages] insert error:", error);
       }
     },
-    [conversationId],
+    [conversationId, messages],
   );
 
   return {

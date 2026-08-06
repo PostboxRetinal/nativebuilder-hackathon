@@ -94,8 +94,7 @@ pnpm build            # production build (100MB limit)
 - End-to-end flow test: auth -> record -> transcribe -> submit research -> see answer with sources
 
 ### Known Bugs
-- `tsconfig.json`: `erasableSyntaxOnly` is not a valid TypeScript option (line 21)
-- `useSpeechmatics.ts`: stale closure on `state` in `ws.onerror` (line ~241) — should use `useRef` instead
+- No known bugs at this time.
 
 ## File Map
 
