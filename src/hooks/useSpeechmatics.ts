@@ -43,7 +43,7 @@ export function useSpeechmatics(): UseSpeechmaticsReturn {
 
     if (clientRef.current) {
       try {
-        clientRef.current.stop();
+        clientRef.current.stopRecognition();
       } catch {
         // ignore close errors
       }
@@ -138,7 +138,7 @@ export function useSpeechmatics(): UseSpeechmaticsReturn {
           },
         });
       } catch (micErr) {
-        client.stop();
+        client.stopRecognition();
         clientRef.current = null;
         if (
           micErr instanceof DOMException &&
@@ -161,7 +161,6 @@ export function useSpeechmatics(): UseSpeechmaticsReturn {
       const audioContext = new AudioContext({ sampleRate: TARGET_SAMPLE_RATE });
       audioContextRef.current = audioContext;
 
-      const actualSampleRate = audioContext.sampleRate;
       const source = audioContext.createMediaStreamSource(mediaStream);
       sourceRef.current = source;
 
@@ -173,7 +172,7 @@ export function useSpeechmatics(): UseSpeechmaticsReturn {
         const inputData = e.inputBuffer.getChannelData(0);
         const pcm16 = float32ToPcm16(inputData);
         try {
-          client.sendAudio(pcm16.buffer);
+          client.sendAudio(pcm16.buffer as ArrayBuffer);
         } catch {
           // ignore send errors
         }
@@ -232,7 +231,7 @@ export function useSpeechmatics(): UseSpeechmaticsReturn {
 
     if (clientRef.current) {
       try {
-        clientRef.current.stop();
+        clientRef.current.stopRecognition();
       } catch {
         // ignore
       }
