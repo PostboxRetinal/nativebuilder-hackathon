@@ -1,11 +1,11 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { supabase } from "../lib/supabase";
+import { RealtimeClient } from "@speechmatics/real-time-client";
 
 type RecordingState = "idle" | "recording" | "processing" | "done" | "error";
 
 const EDGE_FUNCTION_URL =
   "https://vpditxpomxixcijriyzg.supabase.co/functions/v1/speechmatics-token";
-const WS_BASE = "wss://eu.rt.speechmatics.com/v2";
 const TARGET_SAMPLE_RATE = 16000;
 
 export interface UseSpeechmaticsReturn {
@@ -24,7 +24,7 @@ export function useSpeechmatics(): UseSpeechmaticsReturn {
   const [finalText, setFinalText] = useState("");
   const [error, setError] = useState("");
 
-  const wsRef = useRef<WebSocket | null>(null);
+  const clientRef = useRef<RealtimeClient | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const processorRef = useRef<ScriptProcessorNode | null>(null);
@@ -32,7 +32,6 @@ export function useSpeechmatics(): UseSpeechmaticsReturn {
   const stateRef = useRef<RecordingState>("idle");
   const stopTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Accumulate final transcript fragments as they come in
   const transcriptAccRef = useRef("");
   useEffect(() => { stateRef.current = state; }, [state]);
 
@@ -42,23 +41,15 @@ export function useSpeechmatics(): UseSpeechmaticsReturn {
       stopTimeoutRef.current = null;
     }
 
-    // Close WebSocket
-    if (wsRef.current) {
-      const ws = wsRef.current;
-      if (
-        ws.readyState === WebSocket.OPEN ||
-        ws.readyState === WebSocket.CONNECTING
-      ) {
-        try {
-          ws.close();
-        } catch {
-          // ignore close errors
-        }
+    if (clientRef.current) {
+      try {
+        clientRef.current.stop();
+      } catch {
+        // ignore close errors
       }
-      wsRef.current = null;
+      clientRef.current = null;
     }
 
-    // Disconnect audio processing
     if (processorRef.current) {
       try {
         processorRef.current.disconnect();
@@ -76,20 +67,17 @@ export function useSpeechmatics(): UseSpeechmaticsReturn {
       sourceRef.current = null;
     }
 
-    // Stop microphone
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
 
-    // Close AudioContext
     if (audioContextRef.current) {
       audioContextRef.current.close().catch(() => {});
       audioContextRef.current = null;
     }
   }, []);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       cleanup();
@@ -109,7 +97,6 @@ export function useSpeechmatics(): UseSpeechmaticsReturn {
     transcriptAccRef.current = "";
 
     try {
-      // 1. Get token from Edge Function
       const {
         data: { session },
       } = await supabase.auth.getSession();
@@ -137,18 +124,9 @@ export function useSpeechmatics(): UseSpeechmaticsReturn {
         return;
       }
 
-      // 2. Open WebSocket
-      const ws = new WebSocket(`${WS_BASE}?jwt=${token}`);
-      ws.binaryType = "arraybuffer";
-      wsRef.current = ws;
+      const client = new RealtimeClient();
+      clientRef.current = client;
 
-      // Wait for the socket to open before sending the mic stream
-      await new Promise<void>((resolve, reject) => {
-        ws.onopen = () => resolve();
-        ws.onerror = () => reject(new Error("WebSocket connection failed"));
-      });
-
-      // 3. Capture microphone
       let mediaStream: MediaStream;
       try {
         mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -160,8 +138,8 @@ export function useSpeechmatics(): UseSpeechmaticsReturn {
           },
         });
       } catch (micErr) {
-        ws.close();
-        wsRef.current = null;
+        client.stop();
+        clientRef.current = null;
         if (
           micErr instanceof DOMException &&
           micErr.name === "NotAllowedError"
@@ -183,86 +161,60 @@ export function useSpeechmatics(): UseSpeechmaticsReturn {
       const audioContext = new AudioContext({ sampleRate: TARGET_SAMPLE_RATE });
       audioContextRef.current = audioContext;
 
-      // If actual sample rate differs, we still send at whatever rate the context
-      // is running. Speechmatics accepts this as long as StartRecognition matches.
       const actualSampleRate = audioContext.sampleRate;
-
       const source = audioContext.createMediaStreamSource(mediaStream);
       sourceRef.current = source;
 
-      // ScriptProcessorNode for PCM conversion
       const bufferSize = 4096;
       const processor = audioContext.createScriptProcessor(bufferSize, 1, 1);
       processorRef.current = processor;
 
       processor.onaudioprocess = (e) => {
-        if (wsRef.current?.readyState !== WebSocket.OPEN) return;
-
-        const inputData = e.inputBuffer.getChannelData(0); // Float32Array
+        const inputData = e.inputBuffer.getChannelData(0);
         const pcm16 = float32ToPcm16(inputData);
-
         try {
-          wsRef.current!.send(pcm16.buffer);
+          client.sendAudio(pcm16.buffer);
         } catch {
-          // ignore send errors (socket may be closing)
+          // ignore send errors
         }
       };
 
       source.connect(processor);
       processor.connect(audioContext.destination);
 
-      // 4. Send StartRecognition
-      const startMsg = {
-        message: "StartRecognition",
-        audio_format: {
-          type: "raw",
-          encoding: "pcm_s16le",
-          sample_rate: actualSampleRate,
-        },
+      client.start(token, {
         transcription_config: {
           language: "en",
-          max_delay: 2,
           enable_partials: true,
         },
-      };
-      ws.send(JSON.stringify(startMsg));
+      });
 
-      // 5. Handle incoming messages
-      ws.onmessage = (event) => {
-        try {
-          const msg = JSON.parse(event.data as string);
-
-          if (msg.message === "AddPartialTranscript") {
-            const text = msg.metadata?.transcript ?? "";
-            setPartialText(text);
-          } else if (msg.message === "AddTranscript") {
-            const text = msg.metadata?.transcript ?? "";
-            if (text) {
-              transcriptAccRef.current +=
-                (transcriptAccRef.current ? " " : "") + text;
-              setFinalText(transcriptAccRef.current);
-              setPartialText("");
-            }
-          } else if (msg.message === "EndOfTranscript") {
-            setState("done");
+      client.addEventListener("receiveMessage", ({ data }) => {
+        if (data.message === "AddPartialTranscript") {
+          const text = data.results
+            .map((r: any) => r.alternatives?.[0]?.content ?? "")
+            .join(" ");
+          setPartialText(text);
+        } else if (data.message === "AddTranscript") {
+          const text = data.results
+            .map((r: any) => r.alternatives?.[0]?.content ?? "")
+            .join(" ");
+          if (text) {
+            transcriptAccRef.current +=
+              (transcriptAccRef.current ? " " : "") + text;
+            setFinalText(transcriptAccRef.current);
+            setPartialText("");
           }
-        } catch {
-          // ignore non-JSON messages (binary acks, etc.)
+        } else if (data.message === "EndOfTranscript") {
+          setState("done");
+        } else if (data.message === "Error") {
+          if (stateRef.current !== "done") {
+            setError(`Connection error: ${data.reason || "Unknown error"}`);
+            setState("error");
+            cleanup();
+          }
         }
-      };
-
-      ws.onerror = () => {
-        if (stateRef.current !== "done") {
-          setError("Connection lost. Tap to retry.");
-          setState("error");
-          cleanup();
-        }
-      };
-
-      ws.onclose = () => {
-        wsRef.current = null;
-        // If we didn't end normally, transition to done (or error already set)
-      };
+      });
 
       setState("recording");
     } catch (err) {
@@ -278,19 +230,16 @@ export function useSpeechmatics(): UseSpeechmaticsReturn {
     setState("processing");
     setPartialText("");
 
-    const ws = wsRef.current;
-    if (ws && ws.readyState === WebSocket.OPEN) {
+    if (clientRef.current) {
       try {
-        ws.send(JSON.stringify({ message: "EndOfStream" }));
+        clientRef.current.stop();
       } catch {
         // ignore
       }
     }
-    // Don't close the socket yet — we need to wait for EndOfTranscript
-    // Speechmatics will close it after sending EndOfTranscript.
-    // But we set a safety timeout:
+
     stopTimeoutRef.current = setTimeout(() => {
-      if (wsRef.current) {
+      if (clientRef.current) {
         cleanup();
         if (stateRef.current === "processing") {
           if (transcriptAccRef.current) {
@@ -303,7 +252,6 @@ export function useSpeechmatics(): UseSpeechmaticsReturn {
       }
     }, 8000);
 
-    // Stop the mic track so the user sees it's done
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
@@ -346,7 +294,6 @@ export function useSpeechmatics(): UseSpeechmaticsReturn {
   };
 }
 
-/** Convert Float32Array samples to Int16 PCM little-endian */
 function float32ToPcm16(float32: Float32Array): Int16Array {
   const len = float32.length;
   const pcm16 = new Int16Array(len);

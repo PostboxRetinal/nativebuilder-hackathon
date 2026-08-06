@@ -24,3 +24,35 @@
 ## 4. Infrastructure
 
 - [x] 4.1 GitHub Actions CI: tsc check + vite build on push to main
+- [ ] 4.2 GitHub Actions: add explicit `permissions: contents: read` (CodeQL alert #1)
+
+## 5. Security (OWASP Top 10 2021)
+
+> Plan: `.hermes/plans/2026-08-06_OWASP-e2e-check.md`
+
+- [ ] 5.1 Add ESLint security plugin (`eslint-plugin-security`)
+- [ ] 5.2 Migrate to official Speechmatics SDK (`@speechmatics/real-time-client`) — eliminate JWT in WS URL
+- [ ] 5.3 Add Content Security Policy header via Vite
+- [ ] 5.4 Strengthen password policy (min 8 chars, complexity)
+- [ ] 5.5 Verify Supabase RLS policies on `conversations` + `messages`
+- [ ] 5.6 Add rate limiting on auth endpoints
+- [ ] 5.7 Harden Vite build config (`minify: 'esbuild'`, `sourcemap`)
+- [ ] 5.8 Document external deps (SRI not applicable for bundled)
+- [ ] 5.9 Run `bun audit` — fix high/critical CVEs
+- [ ] 5.10 Generate OWASP audit report (`.hermes/reports/owasp-audit-2026-08-06.md`)
+- [ ] 4.2 GitHub Actions: add explicit `permissions: contents: read` (CodeQL alert #1)
+
+## 5. Security (OWASP Top 10 2021)
+
+> Plan: `.hermes/plans/2026-08-06_OWASP-e2e-check.md`
+
+- [ ] 5.1 Add ESLint security plugin (`eslint-plugin-security`)
+- [ ] 5.2 Migrate to official Speechmatics SDK (`@speechmatics/real-time-client`) — eliminate JWT in WS URL
+- [ ] 5.3 Add Content Security Policy header via Vite
+- [ ] 5.4 Strengthen password policy (min 8 chars, complexity)
+- [ ] 5.5 Verify Supabase RLS policies on `conversations` + `messages`
+- [ ] 5.6 Add rate limiting on auth endpoints
+- [ ] 5.7 Harden Vite build config (`minify: 'esbuild'`, `sourcemap`)
+- [ ] 5.8 Document external deps (SRI not applicable for bundled)
+- [ ] 5.9 Run `bun audit` — fix high/critical CVEs
+- [ ] 5.10 Generate OWASP audit report (`.hermes/reports/owasp-audit-2026-08-06.md`)

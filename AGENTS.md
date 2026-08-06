@@ -93,6 +93,28 @@ pnpm build            # production build (100MB limit)
 - Wire research results to active conversation
 - End-to-end flow test: auth -> record -> transcribe -> submit research -> see answer with sources
 
+### Security (OWASP Top 10 2021) — Plan: `.hermes/plans/2026-08-06_OWASP-e2e-check.md`
+- ESLint security plugin (`eslint-plugin-security`)
+- Migrate to official Speechmatics SDK (`@speechmatics/real-time-client`) — eliminate JWT in WS URL
+- Add Content Security Policy header
+- Strengthen password policy (min 8 chars, complexity)
+- Verify Supabase RLS policies on `conversations` + `messages`
+- Add rate limiting on auth endpoints
+- Harden Vite build config (`minify: 'esbuild'`, `sourcemap`)
+- Run `bun audit` — fix high/critical CVEs
+- Generate OWASP audit report
+
+### Security (OWASP Top 10 2021) — Plan: `.hermes/plans/2026-08-06_OWASP-e2e-check.md`
+- ESLint security plugin (`eslint-plugin-security`)
+- Migrate to official Speechmatics SDK (`@speechmatics/real-time-client`) — eliminate JWT in WS URL
+- Add Content Security Policy header
+- Strengthen password policy (min 8 chars, complexity)
+- Verify Supabase RLS policies on `conversations` + `messages`
+- Add rate limiting on auth endpoints
+- Harden Vite build config (`minify: 'esbuild'`, `sourcemap`)
+- Run `bun audit` — fix high/critical CVEs
+- Generate OWASP audit report
+
 ### Known Bugs
 - No known bugs at this time.
 

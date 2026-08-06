@@ -22,9 +22,21 @@ export default function AuthScreen() {
       return;
     }
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
       return;
+    }
+
+    if (mode === "signup") {
+      const hasUpper = /[A-Z]/.test(password);
+      const hasNumber = /[0-9]/.test(password);
+      const hasSpecial = /[^A-Za-z0-9]/.test(password);
+      if (!hasUpper || !hasNumber || !hasSpecial) {
+        setError(
+          "Password must contain uppercase, number, and special character.",
+        );
+        return;
+      }
     }
 
     setSubmitting(true);
