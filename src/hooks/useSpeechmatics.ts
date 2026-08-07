@@ -8,6 +8,37 @@ const EDGE_FUNCTION_URL =
   "https://vpditxpomxixcijriyzg.supabase.co/functions/v1/speechmatics-token";
 const TARGET_SAMPLE_RATE = 16000;
 
+export type SpeechLanguage =
+  | "en"
+  | "es"
+  | "es-bilingual"
+  | "pt"
+  | "fr"
+  | "de"
+  | "it"
+  | "ja"
+  | "cmn";
+
+/**
+ * Maps a UI selector value to the Speechmatics transcription config.
+ * The Spanish-English bilingual pack requires `domain: "bilingual-en"`.
+ * Validated against https://docs.speechmatics.com/speech-to-text/languages
+ */
+const LANGUAGE_CONFIG: Record<
+  SpeechLanguage,
+  { language: string; domain?: string }
+> = {
+  en: { language: "en" },
+  es: { language: "es" },
+  "es-bilingual": { language: "es", domain: "bilingual-en" },
+  pt: { language: "pt" },
+  fr: { language: "fr" },
+  de: { language: "de" },
+  it: { language: "it" },
+  ja: { language: "ja" },
+  cmn: { language: "cmn" },
+};
+
 export interface UseSpeechmaticsReturn {
   state: RecordingState;
   partialText: string;
@@ -18,7 +49,9 @@ export interface UseSpeechmaticsReturn {
   reset: () => void;
 }
 
-export function useSpeechmatics(): UseSpeechmaticsReturn {
+export function useSpeechmatics(
+  language: SpeechLanguage = "en",
+): UseSpeechmaticsReturn {
   const [state, setState] = useState<RecordingState>("idle");
   const [partialText, setPartialText] = useState("");
   const [finalText, setFinalText] = useState("");
@@ -27,7 +60,7 @@ export function useSpeechmatics(): UseSpeechmaticsReturn {
   const clientRef = useRef<RealtimeClient | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const processorRef = useRef<ScriptProcessorNode | null>(null);
+  const processorRef = useRef<AudioWorkletNode | null>(null);
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const stateRef = useRef<RecordingState>("idle");
   const stopTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -167,12 +200,17 @@ export function useSpeechmatics(): UseSpeechmaticsReturn {
       const source = audioContext.createMediaStreamSource(mediaStream);
       sourceRef.current = source;
 
-      const bufferSize = 4096;
-      const processor = audioContext.createScriptProcessor(bufferSize, 1, 1);
-      processorRef.current = processor;
+      await audioContext.audioWorklet.addModule("/audio-processor.js");
 
-      processor.onaudioprocess = (e) => {
-        const inputData = e.inputBuffer.getChannelData(0);
+      const workletNode = new AudioWorkletNode(audioContext, "pcm-capture-processor", {
+        numberOfInputs: 1,
+        numberOfOutputs: 0,
+        channelCount: 1,
+      });
+      processorRef.current = workletNode;
+
+      workletNode.port.onmessage = (e) => {
+        const inputData = e.data as Float32Array;
         const pcm16 = float32ToPcm16(inputData);
         try {
           client.sendAudio(pcm16.buffer as ArrayBuffer);
@@ -181,8 +219,7 @@ export function useSpeechmatics(): UseSpeechmaticsReturn {
         }
       };
 
-      source.connect(processor);
-      processor.connect(audioContext.destination);
+      source.connect(workletNode);
 
       client.start(token, {
         audio_format: {
@@ -191,7 +228,8 @@ export function useSpeechmatics(): UseSpeechmaticsReturn {
           sample_rate: TARGET_SAMPLE_RATE,
         },
         transcription_config: {
-          language: "en",
+          ...LANGUAGE_CONFIG[language],
+          model: "enhanced",
           enable_partials: true,
         },
       });
