@@ -113,12 +113,14 @@ export function useConversations(): UseConversationsReturn {
       const { error } = await supabase
         .from("conversations")
         .delete()
-        .eq("id", id)
-        .select();
+        .eq("id", id);
 
       if (error != null) {
         console.error("[useConversations] delete conversation error:", error);
+        return;
       }
+
+      setConversations((prev) => prev.filter((c) => c.id !== id));
     },
     [],
   );

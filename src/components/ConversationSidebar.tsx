@@ -58,9 +58,11 @@ function ConversationSidebar({
     async (e: React.MouseEvent, id: string) => {
       e.stopPropagation();
       await deleteConversation(id);
-      onCreateNew();
+      if (selectedConversationId === id) {
+        onCreateNew();
+      }
     },
-    [deleteConversation, onCreateNew],
+    [deleteConversation, selectedConversationId, onCreateNew],
   );
 
   if (loading) {

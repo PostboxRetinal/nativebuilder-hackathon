@@ -91,11 +91,15 @@ When no conversation is active, the UI SHALL show a welcome message with instruc
 - **WHEN** the user opens the app with no conversations
 - **THEN** a welcome message with get-started instructions is displayed
 
-### Requirement: Conversation deletion with confirmation
+### Requirement: Conversation deletion
 
-The system SHALL support deleting conversations after explicit user confirmation.
+The system SHALL allow deleting a conversation via a delete control on each sidebar item, removing it immediately without a confirmation modal.
 
-#### Scenario: User deletes conversation
-- **WHEN** the user confirms deletion of a conversation
-- **THEN** the conversation and all its data are removed
+#### Scenario: Delete active conversation
+- **WHEN** the user deletes the currently selected conversation
+- **THEN** the conversation and all its data are removed and a new conversation is created
+
+#### Scenario: Delete non-active conversation
+- **WHEN** the user deletes a conversation that is not currently selected
+- **THEN** the conversation and all its data are removed and the current selection is preserved
 
