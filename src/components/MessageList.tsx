@@ -50,6 +50,7 @@ function MessageList({
       {messages.map((message) => (
         <div key={message.id} className="flex flex-col gap-1">
           <div
+            data-testid={`message-${message.role}`}
             className={`max-w-[80%] whitespace-pre-wrap rounded-lg px-4 py-2 ${
               message.role === "user"
                 ? "ml-auto bg-blue-600 text-white rounded-br-sm"

@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { useConversations } from "../hooks/useConversations";
+import { useAuth } from "../contexts/AuthContext";
 
 interface ConversationSidebarProps {
   selectedConversationId: string | null;
@@ -40,6 +41,11 @@ function ConversationSidebar({
   onCreateNew,
 }: ConversationSidebarProps): React.ReactNode {
   const { conversations, loading, deleteConversation } = useConversations();
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = useCallback(async () => {
+    await signOut();
+  }, [signOut]);
 
   const handleSelect = useCallback(
     (id: string) => {
@@ -118,6 +124,30 @@ function ConversationSidebar({
               No conversations found
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Account footer */}
+      <div className="border-t border-zinc-800 p-3">
+        <div className="flex items-center gap-2">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-xs font-semibold text-zinc-200">
+            {user?.email?.slice(0, 2).toUpperCase() ?? "U"}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-xs font-medium text-zinc-200">
+              {user?.email ?? "Account"}
+            </div>
+            <div className="truncate text-[10px] text-zinc-500">
+              {user?.email ?? "Signed in"}
+            </div>
+          </div>
+          <button
+            onClick={handleSignOut}
+            data-testid="sign-out"
+            className="rounded-md border border-zinc-700 px-2.5 py-1.5 text-xs text-zinc-200 transition-colors hover:border-red-500/60 hover:text-red-400"
+          >
+            Sign out
+          </button>
         </div>
       </div>
     </div>
