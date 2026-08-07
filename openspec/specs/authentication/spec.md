@@ -5,7 +5,7 @@ User identity management with email and password authentication via Supabase Aut
 ## Requirements
 ### Requirement: Sign up with email and password
 
-The system SHALL allow unauthenticated users to create an account with email and password, enforcing a password policy of at least 8 characters including an uppercase letter, a number, and a special character during signup.
+The system SHALL allow unauthenticated users to create an account with email and password, and SHALL enforce a password policy of at least 8 characters including an uppercase letter, a number, and a special character during signup.
 
 #### Scenario: Successful sign up
 - **WHEN** a user submits valid email and password
@@ -21,7 +21,7 @@ The system SHALL allow unauthenticated users to create an account with email and
 
 ### Requirement: Sign in with email and password
 
-The system SHALL allow existing users to authenticate with their email and password, rate-limiting attempts to a maximum of 5 per 60-second window.
+The system SHALL allow existing users to authenticate with their email and password, and SHALL rate-limit sign-in attempts to a maximum of 5 attempts per 60-second window.
 
 #### Scenario: Successful sign in
 - **WHEN** a user submits correct credentials
