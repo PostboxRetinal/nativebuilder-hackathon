@@ -35,6 +35,14 @@ All tables SHALL have RLS enabled. Policies SHALL restrict access so users can o
 - **WHEN** user A queries conversations owned by user B
 - **THEN** the query returns zero rows
 
+### Requirement: RLS auto-enabled on new tables
+
+Any new table created in the public schema SHALL have row-level security enabled automatically, via a database event trigger that runs after table creation.
+
+#### Scenario: New table protected by default
+- **WHEN** a table is created in the public schema
+- **THEN** row-level security is enabled on it automatically, leaving it closed to the API until policies are defined
+
 ### Requirement: Supabase client uses anon key
 
 The browser-side Supabase client SHALL be initialized with the anon/public key only. The service role key SHALL never be present in browser-accessible code.

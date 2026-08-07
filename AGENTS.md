@@ -74,6 +74,22 @@ pnpm build            # production build (100MB limit)
 - Relative imports only (no `@/` alias)
 - `satisfies` operator for literal type inference
 
+### React 19 Best Practices
+Client-side SPA on Vite. No Next.js, no Server Components, no "use server" — ignore RSC/Actions patterns from React 19 blogs that assume a server framework.
+
+- React Compiler is NOT enabled (no `babel-plugin-react-compiler` in `vite.config.ts`), so automatic memoization does NOT apply. Keep manual `useCallback`/`useMemo` discipline: `useCallback` on every function passed as a prop or used in a dependency array. Only consider removing them if the compiler is actually adopted.
+- Context for global/stable state only (auth, session, theme, language). Never for frequently-changing data or per-message state — keep that in the nearest component or a hook.
+- Keep state as local as possible. Lift only when a value is truly shared; prefer custom `use*` hooks over scattering state.
+- Use `useTransition`/`startTransition` for non-urgent state updates (e.g. filtering a large list) so the main UI stays responsive. Not needed on every update — only where work is heavy.
+- Lazy-load large, off-critical-path components with `React.lazy` + `<Suspense>`. Do not lazy-load small always-needed components.
+- Forms: this is a Vite SPA, so use plain controlled `useState` + `onSubmit` handlers (as in `AuthScreen.tsx`). `useActionState`/`useOptimistic`/`<form action>` are for server environments; not applicable here unless we add a server renderer.
+- `use()` is available in React 19 and allows reading context after early returns. Prefer it over `useContext` when you need conditional reads. Do not pass promises created during render to `use()`.
+- Avoid cascading effects: an effect that sets state which triggers another effect is a code smell. Prefer deriving values during render or computing in the event handler.
+- Batch independent async work with `Promise.all`; never `await` sequentially when calls are independent (Vercel/react-best-practices).
+- Lazy-init expensive state: `useState(() => JSON.parse(...))` instead of parsing on every render.
+- Keep components small and focused; one component per file (existing rule). Small components maximize both readability and future compiler benefits.
+- Performance priorities before micro-optimization: eliminate request waterfalls first, then reduce bundle size, then re-render work.
+
 ## Project Status
 
 ### Completed
