@@ -183,13 +183,13 @@
 
 ### Additional Forbidden Patterns
 
-- ❌ **Emojis as icons** — Use SVG icons (Heroicons, Lucide, Simple Icons)
-- ❌ **Brand/social icons from `lucide-react`** — `lucide-react` no longer ships brand/social logos (GitHub, X/Twitter, LinkedIn, Facebook, Instagram, YouTube, Discord, etc.) and importing them breaks the build. Use `react-icons/si` (Simple Icons) for brand logos; keep Lucide/Phosphor for generic UI icons
-- ❌ **Missing cursor:pointer** — All clickable elements must have cursor:pointer
-- ❌ **Layout-shifting hovers** — Avoid scale transforms that shift layout
-- ❌ **Low contrast text** — Maintain 4.5:1 minimum contrast ratio
-- ❌ **Instant state changes** — Always use transitions (150-300ms)
-- ❌ **Invisible focus states** — Focus states must be visible for a11y
+- ❌ **Emojis as icons** - Use SVG icons (Heroicons, Lucide, Simple Icons)
+- ❌ **Brand/social icons from `lucide-react`** - `lucide-react` no longer ships brand/social logos (GitHub, X/Twitter, LinkedIn, Facebook, Instagram, YouTube, Discord, etc.) and importing them breaks the build. Use `react-icons/si` (Simple Icons) for brand logos; keep Lucide/Phosphor for generic UI icons
+- ❌ **Missing cursor:pointer** - All clickable elements must have cursor:pointer
+- ❌ **Layout-shifting hovers** - Avoid scale transforms that shift layout
+- ❌ **Low contrast text** - Maintain 4.5:1 minimum contrast ratio
+- ❌ **Instant state changes** - Always use transitions (150-300ms)
+- ❌ **Invisible focus states** - Focus states must be visible for a11y
 
 ---
 

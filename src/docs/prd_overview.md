@@ -1,17 +1,17 @@
-# DevVoice – Voice-Powered Developer Research Assistant
+# DevVoice - Voice-Powered Developer Research Assistant
 
 ## Description
 
-DevVoice is a voice-first developer research tool. A developer speaks a technical question aloud, the app transcribes it in real time, researches the answer across the open web, and displays a synthesized answer with citations — all without touching the keyboard. The app persists conversation history so users can follow up with context-aware questions.
+DevVoice is a voice-first developer research tool. A developer speaks a technical question aloud, the app transcribes it in real time, researches the answer across the open web, and displays a synthesized answer with citations - all without touching the keyboard. The app persists conversation history so users can follow up with context-aware questions.
 
 Built for the native.builder hackathon, targeting developers working across any programming language, framework, or tool.
 
 ## Goals
 
-- **Hands-free Q&A** — Developers can ask technical questions by speaking, with real-time transcription feedback.
-- **Intelligent research** — The app autonomously decides what to search for, where to look, and how to synthesize an answer from scraped sources.
-- **Persistent context** — Conversation history is saved so follow-up questions build on prior context.
-- **Trust through transparency** — Answers include citations linking back to source pages.
+- **Hands-free Q&A** - Developers can ask technical questions by speaking, with real-time transcription feedback.
+- **Intelligent research** - The app autonomously decides what to search for, where to look, and how to synthesize an answer from scraped sources.
+- **Persistent context** - Conversation history is saved so follow-up questions build on prior context.
+- **Trust through transparency** - Answers include citations linking back to source pages.
 
 ## User Stories
 
@@ -55,43 +55,43 @@ Built for the native.builder hackathon, targeting developers working across any 
 
 - **Purpose**: Real-time microphone transcription via WebSocket.
 - **Credentials**:
-  - `SPEECHMATICS_API_KEY` — **SECRET** (stored in Supabase Secret Manager, read only inside the `speechmatics-token` Edge Function).
+  - `SPEECHMATICS_API_KEY` - **SECRET** (stored in Supabase Secret Manager, read only inside the `speechmatics-token` Edge Function).
 - **Where code runs**:
-  - `speechmatics-token` Edge Function: **server-side only** — mints short-lived JWTs using the secret API key.
-  - Client: **browser-side** — calls the Edge Function for a token, then opens a WebSocket directly to Speechmatics.
+  - `speechmatics-token` Edge Function: **server-side only** - mints short-lived JWTs using the secret API key.
+  - Client: **browser-side** - calls the Edge Function for a token, then opens a WebSocket directly to Speechmatics.
 - **Transport**: WebSocket (`wss://eu.rt.speechmatics.com/v2?jwt=<token>`).
 - **Protocol**: Edge Function mints a 60-second TTL JWT via `POST https://mp.speechmatics.com/v1/api_keys?type=rt`. The client uses the JWT to open the WebSocket. Real-time `AddPartialTranscript` and `AddTranscript` messages are rendered as the user speaks.
-- **Constraints**: The `SPEECHMATICS_API_KEY` is never sent to the browser — only a short-lived JWT derived from it reaches the client.
+- **Constraints**: The `SPEECHMATICS_API_KEY` is never sent to the browser - only a short-lived JWT derived from it reaches the client.
 
-### Bright Data (Web Research — SERP + Scraping)
+### Bright Data (Web Research - SERP + Scraping)
 
 - **Purpose**: Search the web and scrape target pages to gather research sources for the LLM.
 - **Credentials**:
-  - `BRIGHTDATA_API_KEY` — **SECRET** (stored in Supabase Secret Manager, read only inside the `research` Edge Function).
-- **Where code runs**: All Bright Data calls happen inside the `research` Edge Function — **server-side only**. The API key never reaches the browser.
+  - `BRIGHTDATA_API_KEY` - **SECRET** (stored in Supabase Secret Manager, read only inside the `research` Edge Function).
+- **Where code runs**: All Bright Data calls happen inside the `research` Edge Function - **server-side only**. The API key never reaches the browser.
 - **Transport**: REST (`POST https://api.brightdata.com/request`).
 - **APIs used**:
   - **SERP**: `zone: "serp_api1"`, `url: "https://www.google.com/search?q=<query>"`, `format: "json"`.
-  - **Web Unlocker**: `zone: "web_unlocker1"`, `url: "<page_url>"`, `format: "raw"` — returns page HTML.
+  - **Web Unlocker**: `zone: "web_unlocker1"`, `url: "<page_url>"`, `format: "raw"` - returns page HTML.
 - **Auth**: `Authorization: Bearer <BRIGHTDATA_API_KEY>` header on every request.
 - **Constraints**: The `BRIGHTDATA_API_KEY` is never sent to the browser.
 
 ### AI/ML API (Research Orchestration & Answer Synthesis)
 
-- **Purpose**: The LLM acts as an agent with tools — it analyzes the user's question, decides what to search, calls tools (backed by Bright Data), and synthesizes a final answer with citations.
+- **Purpose**: The LLM acts as an agent with tools - it analyzes the user's question, decides what to search, calls tools (backed by Bright Data), and synthesizes a final answer with citations.
 - **Credentials**:
-  - `AIML_API_KEY` — **SECRET** (stored in Supabase Secret Manager, read only inside the `research` Edge Function).
-- **Where code runs**: Entirely inside the `research` Edge Function — **server-side only**. The API key never reaches the browser.
-- **Transport**: REST — `POST https://api.aimlapi.com/v1/chat/completions`.
+  - `AIML_API_KEY` - **SECRET** (stored in Supabase Secret Manager, read only inside the `research` Edge Function).
+- **Where code runs**: Entirely inside the `research` Edge Function - **server-side only**. The API key never reaches the browser.
+- **Transport**: REST - `POST https://api.aimlapi.com/v1/chat/completions`.
 - **Auth**: `Authorization: Bearer <AIML_API_KEY>` header.
-- **Tool calling**: The Edge Function defines two tools for the model — `search_web(query)` and `scrape_page(url)`. Internally these call Bright Data SERP and Web Unlocker respectively. The Edge Function runs a tool-calling loop: send the conversation to the LLM → LLM requests tool calls → Edge Function executes them and returns results → LLM either calls more tools or produces a final answer.
+- **Tool calling**: The Edge Function defines two tools for the model - `search_web(query)` and `scrape_page(url)`. Internally these call Bright Data SERP and Web Unlocker respectively. The Edge Function runs a tool-calling loop: send the conversation to the LLM → LLM requests tool calls → Edge Function executes them and returns results → LLM either calls more tools or produces a final answer.
 - **Model**: Recommend a model that supports tool calling (the API is OpenAI-compatible, so models like GPT-4o, Claude Sonnet, or Meta Llama 4 via AI/ML API will work). Model selection is specified in the request body: `"model": "<model-id>"`.
 - **Constraints**: The `AIML_API_KEY` is never sent to the browser. The tool-calling loop must have a budget cap (max 3 search + 5 scrape tool calls per question) to prevent runaway usage.
 
 ### Supabase (Auth, Database, Secrets)
 
 - **Purpose**: User authentication, conversation/message persistence, Edge Function hosting, secret storage.
-- **Credentials**: Supabase project URL and publishable (anon) key — **PUBLISHABLE** (used in client code). Service role key is never referenced on the client.
+- **Credentials**: Supabase project URL and publishable (anon) key - **PUBLISHABLE** (used in client code). Service role key is never referenced on the client.
 - **Tables**: `conversations`, `messages` (see Implementation Notes).
 - **Auth**: Supabase Auth with email/password. Auth redirect URLs must include preview environment wildcards (`https://*.nativelyai.app/**`, `https://**.webcontainer-api.io/**`).
 
@@ -108,16 +108,16 @@ Built for the native.builder hackathon, targeting developers working across any 
 
 ## Out of Scope
 
-- Text-to-speech (TTS) — answers are displayed as text only.
-- Mobile app — web-only React app.
-- Voice activity detection (auto-stop) — user manually stops recording.
-- Multi-language support — English only for MVP.
-- Pre-configured source lists — the AI decides sources dynamically via tool calling.
-- Streaming the answer (token-by-token) — the full answer appears when research completes.
+- Text-to-speech (TTS) - answers are displayed as text only.
+- Mobile app - web-only React app.
+- Voice activity detection (auto-stop) - user manually stops recording.
+- Multi-language support - English only for MVP.
+- Pre-configured source lists - the AI decides sources dynamically via tool calling.
+- Streaming the answer (token-by-token) - the full answer appears when research completes.
 
 ## Open Questions
 
-1. **AI/ML API model selection**: Which specific model to use? Needs to support tool calling. AI/ML API has many models — recommend picking one that balances quality with the $10 coupon budget (e.g., a GPT-4o or Claude-equivalent model).
+1. **AI/ML API model selection**: Which specific model to use? Needs to support tool calling. AI/ML API has many models - recommend picking one that balances quality with the $10 coupon budget (e.g., a GPT-4o or Claude-equivalent model).
 
 2. **How many search/scrape iterations?** The LLM agent loop needs a budget to avoid runaway costs. Suggested default: max 3 search + 5 scrape tool calls per question. Confirm this is acceptable.
 
@@ -154,7 +154,7 @@ CREATE TABLE messages (
 ### Edge Functions
 
 1. **`speechmatics-token`**
-   - `GET` — returns `{ token: "<jwt>" }`.
+   - `GET` - returns `{ token: "<jwt>" }`.
    - Requires authenticated user (JWT verification enabled).
    - CORS-enabled: responds to `OPTIONS` with appropriate headers.
 
@@ -188,6 +188,6 @@ App
 ```
 
 ### Dependencies
-- `@supabase/supabase-js` — Supabase client (auth + data)
+- `@supabase/supabase-js` - Supabase client (auth + data)
 - React Router (or equivalent) for routing auth vs app views
-- No additional npm packages needed for Speechmatics, Bright Data, or AI/ML API — all called via `fetch` in Edge Functions or the browser.
+- No additional npm packages needed for Speechmatics, Bright Data, or AI/ML API - all called via `fetch` in Edge Functions or the browser.

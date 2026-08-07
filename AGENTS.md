@@ -1,4 +1,4 @@
-# DevVoice — Agent Instructions
+# DevVoice - Agent Instructions
 
 Voice-powered developer research assistant for the native.builder hackathon.
 
@@ -62,7 +62,7 @@ pnpm build            # production build (100MB limit)
 - Custom hooks: `use*` prefix, lowercase
 
 ### TypeScript Best Practices
-- No `any` — use `unknown` and narrow with type guards
+- No `any` - use `unknown` and narrow with type guards
 - Null/undefined: use `!= null` checks (catches both); never rely on truthiness for strings or numbers
 - Explicit return types on all exported functions
 - `const` over `let`; no `var`
@@ -87,21 +87,21 @@ pnpm build            # production build (100MB limit)
 8. App Assembly: AuthProvider > AuthGate > Sidebar + MessageList + VoiceInput layout
 
 ### Pending
-- `SourceCitation.tsx` — clickable citation card with title, favicon, snippet
-- `useResearch.ts` — research call hook wired to Edge Function
+- `SourceCitation.tsx` - clickable citation card with title, favicon, snippet
+- `useResearch.ts` - research call hook wired to Edge Function
 - Wire VoiceInput submit to research pipeline
 - Wire research results to active conversation
 - End-to-end flow test: auth -> record -> transcribe -> submit research -> see answer with sources
 
-### Security (OWASP Top 10 2021) — Plan: `.hermes/plans/2026-08-06_OWASP-e2e-check.md`
+### Security (OWASP Top 10 2021) - Plan: `.hermes/plans/2026-08-06_OWASP-e2e-check.md`
 - ESLint security plugin (`eslint-plugin-security`)
-- Migrate to official Speechmatics SDK (`@speechmatics/real-time-client`) — eliminate JWT in WS URL
+- Migrate to official Speechmatics SDK (`@speechmatics/real-time-client`) - eliminate JWT in WS URL
 - Add Content Security Policy header
 - Strengthen password policy (min 8 chars, complexity)
-- Verify Supabase RLS policies on `conversations` + `messages`  [PENDING — manual, see OWASP report T5]
+- Verify Supabase RLS policies on `conversations` + `messages`  [PENDING - manual, see OWASP report T5]
 - Add rate limiting on auth endpoints
 - Harden Vite build config (`minify: 'esbuild'`, `sourcemap`)
-- Run `bun audit` — fix high/critical CVEs  [PENDING — manual, see OWASP report T9]
+- Run `bun audit` - fix high/critical CVEs  [PENDING - manual, see OWASP report T9]
 - Generate OWASP audit report
 
 ### Known Bugs
@@ -129,7 +129,7 @@ src/
   lib/
     supabase.ts              # Supabase client instance
     database.types.ts        # Generated DB types
-supabase/                    # (Empty — Edge Functions deployed via natively, not in repo)
+supabase/                    # (Empty - Edge Functions deployed via natively, not in repo)
 ```
 
 ## External Services

@@ -38,4 +38,4 @@ DevVoice is a voice-powered developer research assistant built for the native.bu
 
 ## Open Questions
 
-None — all architectural decisions are reflected in the existing implementation.
+None - all architectural decisions are reflected in the existing implementation.

@@ -1,7 +1,7 @@
 schema: spec-driven
 
 context: |
-  DevVoice — Voice-powered developer research assistant for native.builder hackathon.
+  DevVoice - Voice-powered developer research assistant for native.builder hackathon.
   Tech stack: React 19, TypeScript, Vite, Tailwind CSS, Supabase (DB + Edge Functions + Auth)
   External APIs: Speechmatics (real-time STT), Bright Data (research), AI/ML API (answer gen)
   Environment: Natively web container (memory-limited, no minify, no treeshake)

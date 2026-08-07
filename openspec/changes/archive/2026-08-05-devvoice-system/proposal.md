@@ -7,7 +7,7 @@ DevVoice needs a formalized Software Design Description that captures the curren
 This change documents the existing system and specifies the remaining capabilities to build:
 - Document completed capabilities: Supabase foundation, auth, voice input, Edge Functions
 - Specify pending capabilities: conversation management UI, end-to-end research pipeline
-- No code changes — documentation only.
+- No code changes - documentation only.
 
 ## Capabilities
 
@@ -19,12 +19,12 @@ This change documents the existing system and specifies the remaining capabiliti
 - `research-pipeline`: Edge Function orchestration (Bright Data + AI/ML API), source citations, answer generation
 
 ### Modified Capabilities
-*(none — no existing specs to modify)*
+*(none - no existing specs to modify)*
 
 ## Impact
 
-- `openspec/specs/` — new spec files created for each capability
-- `openspec/changes/devvoice-system/` — proposal, specs, design, tasks
+- `openspec/specs/` - new spec files created for each capability
+- `openspec/changes/devvoice-system/` - proposal, specs, design, tasks
 - No code or config changes
 
 ## Non-Goals

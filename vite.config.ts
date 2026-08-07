@@ -29,7 +29,7 @@ export default defineConfig({
         fontSrc: [self, 'https://fonts.gstatic.com'],
       }),
     }),
-    // Tailwind v3 via PostCSS — memory-friendly, no OOM
+    // Tailwind v3 via PostCSS - memory-friendly, no OOM
   ],
   server: {
     allowedHosts: true,
@@ -45,7 +45,7 @@ export default defineConfig({
     sourcemap: 'hidden',
     rollupOptions: {
       // @supabase/supabase-js is external but bundled locally via importmap.
-      // SRI not applicable — no CDN loading.
+      // SRI not applicable - no CDN loading.
       external: ['@supabase/supabase-js'],
       treeshake: false,
     },
