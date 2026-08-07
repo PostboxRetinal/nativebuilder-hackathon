@@ -85,23 +85,20 @@ pnpm build            # production build (100MB limit)
 6. Conversation Data Layer: `useConversations.ts`, `useMessages.ts`
 7. Conversation UI: `ConversationSidebar.tsx`, `MessageList.tsx`, `ConversationView.tsx`
 8. App Assembly: AuthProvider > AuthGate > Sidebar + MessageList + VoiceInput layout
+9. Research Pipeline: `useResearch.ts` hook + `SourceCitation.tsx` cards + `Message` type widened with `sources` + wiring in `ConversationView` (user msg -> research EF -> assistant msg with sources)
 
 ### Pending
-- `SourceCitation.tsx` - clickable citation card with title, favicon, snippet
-- `useResearch.ts` - research call hook wired to Edge Function
-- Wire VoiceInput submit to research pipeline
-- Wire research results to active conversation
-- End-to-end flow test: auth -> record -> transcribe -> submit research -> see answer with sources
+- End-to-end flow test (manual): auth -> record -> transcribe -> submit research -> see answer with sources
 
 ### Security (OWASP Top 10 2021) - Plan: `.hermes/plans/2026-08-06_OWASP-e2e-check.md`
 - ESLint security plugin (`eslint-plugin-security`)
 - Migrate to official Speechmatics SDK (`@speechmatics/real-time-client`) - eliminate JWT in WS URL
 - Add Content Security Policy header
 - Strengthen password policy (min 8 chars, complexity)
-- Verify Supabase RLS policies on `conversations` + `messages`  [PENDING - manual, see OWASP report T5]
+- Verify Supabase RLS policies on `conversations` + `messages`  [DONE 2026-08-07: verified via Supabase MCP - all CRUD scoped by auth.uid(), anon has no access]
 - Add rate limiting on auth endpoints
 - Harden Vite build config (`minify: 'esbuild'`, `sourcemap`)
-- Run `bun audit` - fix high/critical CVEs  [PENDING - manual, see OWASP report T9]
+- Run `bun audit` - fix high/critical CVEs  [DONE 2026-08-07: audit clean, no vulnerabilities]
 - Generate OWASP audit report
 
 ### Known Bugs

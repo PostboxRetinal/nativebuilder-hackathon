@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSpeechmatics } from "../hooks/useSpeechmatics";
 import type { UseSpeechmaticsReturn } from "../hooks/useSpeechmatics";
+import type { SpeechLanguage } from "../hooks/useSpeechmatics";
 
 // ── Inline SVG icons (avoids pulling in all of lucide-react → OOM in sandbox) ──
 
@@ -56,6 +57,7 @@ export interface VoiceInputProps {
 }
 
 export default function VoiceInput({ onTranscriptFinal }: VoiceInputProps) {
+  const [language, setLanguage] = useState<SpeechLanguage>("en");
   const {
     state,
     partialText,
@@ -64,7 +66,7 @@ export default function VoiceInput({ onTranscriptFinal }: VoiceInputProps) {
     startRecording,
     stopRecording,
     reset,
-  } = useSpeechmatics();
+  } = useSpeechmatics(language);
 
   const [editedText, setEditedText] = useState("");
 
@@ -142,7 +144,40 @@ export default function VoiceInput({ onTranscriptFinal }: VoiceInputProps) {
         onStop={stopRecording}
         onRetry={startRecording}
       />
+
+      {/* Language Selector */}
+      <LanguageToggle language={language} onChange={setLanguage} />
     </div>
+  );
+}
+
+function LanguageToggle({
+  language,
+  onChange,
+}: {
+  language: SpeechLanguage;
+  onChange: (l: SpeechLanguage) => void;
+}) {
+  return (
+    <label className="flex items-center gap-2 text-xs text-muted-foreground">
+      <span className="whitespace-nowrap">Language</span>
+      <select
+        aria-label="Transcription language"
+        value={language}
+        onChange={(e) => onChange(e.target.value as SpeechLanguage)}
+        className="rounded-md border border-border bg-muted px-2 py-1 text-xs font-medium text-foreground focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring cursor-pointer"
+      >
+        <option value="en">English</option>
+        <option value="es">Español</option>
+        <option value="es-bilingual">Español + English</option>
+        <option value="pt">Português</option>
+        <option value="fr">Français</option>
+        <option value="de">Deutsch</option>
+        <option value="it">Italiano</option>
+        <option value="ja">日本語</option>
+        <option value="cmn">普通话</option>
+      </select>
+    </label>
   );
 }
 

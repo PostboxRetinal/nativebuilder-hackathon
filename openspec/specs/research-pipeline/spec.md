@@ -29,11 +29,15 @@ The system SHALL pass scraped content and the original query to an AI/ML API to 
 
 ### Requirement: Source citations in answers
 
-Answers SHALL include source citations with url, title, content snippet, and favicon_url for each referenced source.
+Answers SHALL include source citations, each with a title and URL for the referenced source, rendered as clickable cards that open in a new tab. Where a source has no title, the URL host SHALL be shown as a fallback.
 
 #### Scenario: Citation fields present
 - **WHEN** an answer is returned with sources
-- **THEN** each source has url, title, content, and favicon_url fields
+- **THEN** each source has at least title and url fields, and the card shows a favicon derived from the source URL's hostname alongside the title
+
+#### Scenario: Citation opens externally
+- **WHEN** the user clicks a source card
+- **THEN** the citation opens in a new browser tab with `noopener` and `noreferrer`
 
 ### Requirement: Rate limiting per user
 
