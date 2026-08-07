@@ -26,6 +26,10 @@ export default defineConfig([
       security,
     },
     rules: {
+      // TS handles these; base rules produce false positives (React namespace, unused vars)
+      "no-undef": "off",
+      "no-unused-vars": "off",
+      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
       "security/detect-eval-with-expression": "error",
       "security/detect-no-csrf-before-method-override": "error",
       "security/detect-non-literal-fs-filename": "warn",
