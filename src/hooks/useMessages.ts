@@ -4,14 +4,16 @@ import type { Database } from "../lib/database.types";
 
 type MessageRow = Database["public"]["Tables"]["messages"]["Row"];
 
-type Message = Pick<MessageRow, "id" | "role" | "content" | "created_at"> & {
+export type Source = { title: string; url: string };
+
+export type Message = Pick<MessageRow, "id" | "role" | "content" | "created_at" | "sources"> & {
   order_index: number;
 };
 
 type UseMessagesReturn = {
   messages: Message[];
   loading: boolean;
-  addMessage: (role: MessageRow["role"], content: string) => Promise<void>;
+  addMessage: (role: MessageRow["role"], content: string, sources?: Source[]) => Promise<void>;
 };
 
 export function useMessages(
@@ -24,7 +26,7 @@ export function useMessages(
   async function fetchMessages(): Promise<Message[] | null> {
     const { data, error } = await supabase
       .from("messages")
-      .select("id, role, content, created_at, order_index")
+      .select("id, role, content, created_at, order_index, sources")
       .eq("conversation_id", conversationId)
       .order("order_index", { ascending: true });
 
@@ -60,7 +62,7 @@ export function useMessages(
     init();
 
     const channel = supabase
-      .channel(`messages-${conversationId}`)
+      .channel(`messages-${conversationId}-${crypto.randomUUID()}`)
       .on(
         "postgres_changes",
         {
@@ -88,26 +90,45 @@ export function useMessages(
   }, [conversationId]);
 
   const addMessage = useCallback(
-    async (role: MessageRow["role"], content: string): Promise<void> => {
+    async (
+      role: MessageRow["role"],
+      content: string,
+      sources?: Source[],
+    ): Promise<void> => {
       // Calculate next order_index
-      const { data: lastMessage } = await supabase
+      const { data: lastMessage, error: lastError } = await supabase
         .from("messages")
         .select("order_index")
         .eq("conversation_id", conversationId)
         .order("order_index", { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      const nextIndex = (lastMessage?.order_index ?? messages.length) + 1;
+      // On absence of rows (.maybeSingle → null) or read error, fall back to
+      // current local count so the first insert still gets a sequential index.
+      if (lastError == null) {
+        const nextIndex = (lastMessage?.order_index ?? messages.length) + 1;
 
-      const { error } = await supabase.from("messages").insert({
-        conversation_id: conversationId,
-        role,
-        content,
-        order_index: nextIndex,
-      });
-      if (error != null) {
-        console.error("[useMessages] insert error:", error);
+        const { data: inserted, error } = await supabase
+          .from("messages")
+          .insert({
+            conversation_id: conversationId,
+            role,
+            content,
+            order_index: nextIndex,
+            sources: sources ?? [],
+          })
+          .select()
+          .single();
+
+        if (error != null) {
+          console.error("[useMessages] insert error:", error);
+        } else if (inserted != null) {
+          // Reflect the insert immediately, independent of the realtime feed.
+          setMessages((prev) => [...prev, inserted as Message]);
+        }
+      } else {
+        console.error("[useMessages] last-message read error:", lastError);
       }
     },
     [conversationId, messages],

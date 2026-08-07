@@ -42,10 +42,13 @@ export function useSpeechmatics(): UseSpeechmaticsReturn {
     }
 
     if (clientRef.current) {
-      try {
-        clientRef.current.stopRecognition();
-      } catch {
-        // ignore close errors
+      const wsState = clientRef.current.socketState;
+      if (wsState !== "closing" && wsState !== "closed") {
+        try {
+          clientRef.current.stopRecognition();
+        } catch {
+          // ignore close errors
+        }
       }
       clientRef.current = null;
     }
@@ -182,6 +185,11 @@ export function useSpeechmatics(): UseSpeechmaticsReturn {
       processor.connect(audioContext.destination);
 
       client.start(token, {
+        audio_format: {
+          type: "raw",
+          encoding: "pcm_s16le",
+          sample_rate: TARGET_SAMPLE_RATE,
+        },
         transcription_config: {
           language: "en",
           enable_partials: true,

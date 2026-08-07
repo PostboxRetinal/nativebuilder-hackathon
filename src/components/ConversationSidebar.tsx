@@ -107,14 +107,14 @@ function ConversationSidebar({
                     <span className="text-xs font-bold">X</span>
                   </button>
                 </div>
-                <span className="mt-1 block text-[10px] text-zinc-500">
+                <span className="mt-1 block text-[10px] text-zinc-400">
                   {formatRelativeTime(conv.created_at)}
                 </span>
               </div>
             );
           })}
           {conversations.length === 0 && (
-            <div className="mt-4 text-center text-xs text-zinc-600">
+            <div className="mt-4 text-center text-xs text-zinc-400">
               No conversations found
             </div>
           )}

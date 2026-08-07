@@ -64,7 +64,7 @@ export function useConversations(): UseConversationsReturn {
     fetchAndSet();
 
     const channel = supabase
-      .channel("conversations-changes")
+      .channel(`conversations-changes-${crypto.randomUUID()}`)
       .on(
         "postgres_changes",
         {

@@ -100,7 +100,7 @@ export default function VoiceInput({ onTranscriptFinal }: VoiceInputProps) {
           value={editedText}
           onChange={(e) => setEditedText(e.target.value)}
           rows={3}
-          className="w-full px-4 py-3 rounded-lg bg-muted border border-border text-foreground placeholder:text-muted/60 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring transition-colors text-sm resize-none"
+          className="w-full px-4 py-3 rounded-lg bg-muted border border-border text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring transition-colors text-sm resize-none"
           placeholder="Your transcription will appear here…"
         />
         <div className="flex gap-3">
@@ -177,7 +177,7 @@ function TranscriptionPreview({
         </span>
       )}
       {!finalText && !partialText && isRecording && (
-        <span className="text-muted italic">Listening…</span>
+        <span className="text-muted-foreground italic">Listening…</span>
       )}
     </div>
   );
@@ -216,7 +216,7 @@ function RecordButton({
     label = "Finalizing…";
     icon = "spinner";
     disabled = true;
-    buttonClass = "bg-muted text-muted/60 cursor-not-allowed";
+    buttonClass = "bg-muted text-muted-foreground/60 cursor-not-allowed";
   } else if (isError) {
     label = error || "Tap to retry";
     icon = "mic";
@@ -251,7 +251,7 @@ function RecordButton({
       </button>
       <span
         className={`text-xs font-medium transition-colors duration-200 ${
-          isError ? "text-destructive" : "text-muted"
+          isError ? "text-destructive" : "text-muted-foreground"
         }`}
       >
         {isError ? error : isProcessing ? "Finalizing…" : isRecording ? "Listening…" : "Tap to record"}

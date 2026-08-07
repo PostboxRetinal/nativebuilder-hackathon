@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import { useMessages } from "../hooks/useMessages";
 import { useConversations } from "../hooks/useConversations";
+import { useResearch } from "../hooks/useResearch";
 import MessageList from "./MessageList";
 import VoiceInput from "./VoiceInput";
 
@@ -9,8 +10,9 @@ interface ConversationViewProps {
 }
 
 function ConversationView({ conversationId }: ConversationViewProps): React.ReactNode {
-  const { addMessage } = useMessages(conversationId);
+  const { messages, loading, addMessage } = useMessages(conversationId);
   const { conversations, updateTitle } = useConversations();
+  const { researching, runResearch } = useResearch();
   const [textInput, setTextInput] = useState("");
   const isFirstMessage = useRef(true);
 
@@ -30,10 +32,12 @@ function ConversationView({ conversationId }: ConversationViewProps): React.Reac
         await updateTitle(conversationId, trimmed.slice(0, 30));
       }
 
-      // Research EF placeholder (wired in Task 7).
-      console.log("[Research] Triggering for:", trimmed);
+      const result = await runResearch(trimmed);
+      if (result != null) {
+        await addMessage("assistant", result.answer, result.sources);
+      }
     },
-    [conversationId, addMessage, updateTitle],
+    [conversationId, addMessage, updateTitle, runResearch],
   );
 
   const handleSubmit = useCallback(
@@ -54,8 +58,12 @@ function ConversationView({ conversationId }: ConversationViewProps): React.Reac
       </header>
 
       {/* Messages */}
-      <main className="flex-1 overflow-hidden">
-        <MessageList conversationId={conversationId} />
+      <main className="flex min-h-0 flex-1 overflow-hidden bg-black">
+        <MessageList
+          researching={researching}
+          messages={messages}
+          loading={loading}
+        />
       </main>
 
       {/* Input */}

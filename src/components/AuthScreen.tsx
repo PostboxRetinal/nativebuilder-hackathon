@@ -74,7 +74,7 @@ export default function AuthScreen() {
           <h1 className="text-2xl font-semibold text-foreground tracking-tight">
             DevVoice
           </h1>
-          <p className="text-sm text-muted mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Voice-powered developer research
           </p>
         </div>
@@ -89,7 +89,7 @@ export default function AuthScreen() {
               className={`flex-1 pb-3 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded-sm ${
                 mode === "signin"
                   ? "text-foreground border-b-2 border-primary"
-                  : "text-muted hover:text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Sign In
@@ -100,7 +100,7 @@ export default function AuthScreen() {
               className={`flex-1 pb-3 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded-sm ${
                 mode === "signup"
                   ? "text-foreground border-b-2 border-primary"
-                  : "text-muted hover:text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Sign Up
@@ -147,7 +147,7 @@ export default function AuthScreen() {
                 onChange={(e) => setEmail(e.target.value)}
                 aria-describedby={error ? "auth-error" : undefined}
                 aria-invalid={!!error}
-                className="w-full px-3 py-2.5 rounded-lg bg-muted border border-border text-foreground placeholder:text-muted/60 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring transition-colors text-sm"
+                className="w-full px-3 py-2.5 rounded-lg bg-muted border border-border text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring transition-colors text-sm"
               />
             </div>
 
@@ -169,7 +169,7 @@ export default function AuthScreen() {
                 onChange={(e) => setPassword(e.target.value)}
                 aria-describedby={error ? "auth-error" : undefined}
                 aria-invalid={!!error}
-                className="w-full px-3 py-2.5 rounded-lg bg-muted border border-border text-foreground placeholder:text-muted/60 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring transition-colors text-sm"
+                className="w-full px-3 py-2.5 rounded-lg bg-muted border border-border text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring transition-colors text-sm"
               />
             </div>
 
@@ -188,7 +188,7 @@ export default function AuthScreen() {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-xs text-muted mt-6">
+        <p className="text-center text-xs text-muted-foreground mt-6">
           {mode === "signin"
             ? "Don't have an account?"
             : "Already have an account?"}{" "}
