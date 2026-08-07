@@ -41,11 +41,23 @@ The system SHALL allow authenticated users to end their session.
 
 ### Requirement: Password reset via email
 
-The system SHALL allow users to request a password reset link sent to their email.
+The system SHALL allow users to request a password reset link sent to their email, and SHALL allow them to set a new password after following the recovery link.
 
 #### Scenario: Password reset requested
 - **WHEN** a user enters their email on the forgot password screen
 - **THEN** a reset link is sent to that email address
+
+#### Scenario: New password set after recovery
+- **WHEN** a user follows the recovery link and submits a valid new password
+- **THEN** the password is updated and the user can sign in with it
+
+#### Scenario: Weak new password rejected
+- **WHEN** a recovery new password is shorter than 8 characters or lacks an uppercase letter, number, or special character
+- **THEN** the update is blocked with a descriptive error and the password is unchanged
+
+#### Scenario: Mismatched confirmation rejected
+- **WHEN** the new password and its confirmation do not match
+- **THEN** the update is blocked with a descriptive error and the password is unchanged
 
 ### Requirement: Auth state persistence
 

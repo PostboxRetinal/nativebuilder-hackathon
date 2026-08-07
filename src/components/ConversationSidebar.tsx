@@ -151,6 +151,9 @@ function ConversationSidebar({
             Sign out
           </button>
         </div>
+        <div className="mt-3 text-center text-[10px] text-zinc-500">
+          v{__APP_VERSION__}
+        </div>
       </div>
     </div>
   );

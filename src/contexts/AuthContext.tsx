@@ -15,6 +15,13 @@ interface AuthContextValue {
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
   signUp: (email: string, password: string) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
+  isRecovering: boolean;
+  requestPasswordReset: (
+    email: string,
+  ) => Promise<{ error?: string }>;
+  updatePassword: (
+    password: string,
+  ) => Promise<{ error?: string }>;
   // Rate limiting
   authRateLimited: () => boolean;
   authResetRateLimit: () => void;
@@ -26,6 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isRecovering, setIsRecovering] = useState(false);
   // OWASP A07: Rate limiting - 5 attempts per 60s
   const [authAttempts, setAuthAttempts] = useState<
     { ts: number; ip: string }[]
@@ -64,10 +72,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      if (event === "PASSWORD_RECOVERY") {
+        setIsRecovering(true);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -106,6 +117,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
   };
 
+  const requestPasswordReset = async (email: string) => {
+    if (authRateLimited()) {
+      return { error: "Too many attempts. Please try again later." };
+    }
+    recordAuthAttempt();
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin,
+    });
+    if (error) return { error: error.message };
+    return {};
+  };
+
+  const updatePassword = async (password: string) => {
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) return { error: error.message };
+    setIsRecovering(false);
+    return {};
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -115,6 +145,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signIn,
         signUp,
         signOut,
+        isRecovering,
+        requestPasswordReset,
+        updatePassword,
         authRateLimited,
         authResetRateLimit,
       }}

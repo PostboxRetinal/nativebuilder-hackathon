@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
-import AuthScreen from "./components/AuthScreen";
+import AuthScreen, { SetNewPassword } from "./components/AuthScreen";
 import { useConversations } from "./hooks/useConversations";
 import ConversationSidebar from "./components/ConversationSidebar";
 import ConversationView from "./components/ConversationView";
@@ -14,7 +14,7 @@ export default function App() {
 }
 
 function AppContent(): React.ReactNode {
-  const { user, loading } = useAuth();
+  const { user, loading, isRecovering } = useAuth();
   const { createConversation } = useConversations();
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -35,6 +35,10 @@ function AppContent(): React.ReactNode {
         />
       </div>
     );
+  }
+
+  if (isRecovering) {
+    return <SetNewPassword />;
   }
 
   if (user == null) {

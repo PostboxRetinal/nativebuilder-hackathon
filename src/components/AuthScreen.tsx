@@ -1,10 +1,10 @@
 import { useState, type FormEvent } from "react";
 import { useAuth } from "../contexts/AuthContext";
 
-type AuthMode = "signin" | "signup";
+type AuthMode = "signin" | "signup" | "forgot";
 
 export default function AuthScreen() {
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, requestPasswordReset } = useAuth();
   const [mode, setMode] = useState<AuthMode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,7 +17,26 @@ export default function AuthScreen() {
     setError("");
     setSuccessMessage("");
 
-    if (!email.trim() || !password.trim()) {
+    if (!email.trim()) {
+      setError("Please enter your email.");
+      return;
+    }
+
+    if (mode === "forgot") {
+      setSubmitting(true);
+      const result = await requestPasswordReset(email);
+      if (result.error) {
+        setError(result.error);
+      } else {
+        setSuccessMessage(
+          "If an account exists for that email, a password reset link has been sent. Check your inbox.",
+        );
+      }
+      setSubmitting(false);
+      return;
+    }
+
+    if (!password.trim()) {
       setError("Please enter both email and password.");
       return;
     }
@@ -61,7 +80,17 @@ export default function AuthScreen() {
   };
 
   const switchMode = () => {
-    setMode(mode === "signin" ? "signup" : "signin");
+    if (mode === "forgot") {
+      setMode("signin");
+    } else {
+      setMode(mode === "signin" ? "signup" : "signin");
+    }
+    setError("");
+    setSuccessMessage("");
+  };
+
+  const goForgot = () => {
+    setMode("forgot");
     setError("");
     setSuccessMessage("");
   };
@@ -82,30 +111,32 @@ export default function AuthScreen() {
         {/* Card */}
         <div className="bg-background border border-border rounded-xl p-6 shadow-lg">
           {/* Tabs */}
-          <div className="flex mb-6 border-b border-border">
-            <button
-              type="button"
-              onClick={() => setMode("signin")}
-              className={`flex-1 pb-3 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded-sm ${
-                mode === "signin"
-                  ? "text-foreground border-b-2 border-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Sign In
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode("signup")}
-              className={`flex-1 pb-3 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded-sm ${
-                mode === "signup"
-                  ? "text-foreground border-b-2 border-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Sign Up
-            </button>
-          </div>
+          {mode !== "forgot" && (
+            <div className="flex mb-6 border-b border-border">
+              <button
+                type="button"
+                onClick={() => setMode("signin")}
+                className={`flex-1 pb-3 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded-sm ${
+                  mode === "signin"
+                    ? "text-foreground border-b-2 border-primary"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Sign In
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("signup")}
+                className={`flex-1 pb-3 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded-sm ${
+                  mode === "signup"
+                    ? "text-foreground border-b-2 border-primary"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Sign Up
+              </button>
+            </div>
+          )}
 
           {/* Success message (sign up) */}
           {successMessage && (
@@ -151,27 +182,40 @@ export default function AuthScreen() {
               />
             </div>
 
-            <div className="mb-6">
-              <label
-                htmlFor="auth-password"
-                className="block text-sm font-medium text-foreground mb-1.5"
-              >
-                Password
-              </label>
-              <input
-                id="auth-password"
-                type="password"
-                autoComplete={
-                  mode === "signin" ? "current-password" : "new-password"
-                }
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                aria-describedby={error ? "auth-error" : undefined}
-                aria-invalid={!!error}
-                className="w-full px-3 py-2.5 rounded-lg bg-muted border border-border text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring transition-colors text-sm"
-              />
-            </div>
+            {mode !== "forgot" && (
+              <div className="mb-6">
+                <label
+                  htmlFor="auth-password"
+                  className="block text-sm font-medium text-foreground mb-1.5"
+                >
+                  Password
+                </label>
+                <input
+                  id="auth-password"
+                  type="password"
+                  autoComplete={
+                    mode === "signin" ? "current-password" : "new-password"
+                  }
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  aria-describedby={error ? "auth-error" : undefined}
+                  aria-invalid={!!error}
+                  className="w-full px-3 py-2.5 rounded-lg bg-muted border border-border text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring transition-colors text-sm"
+                />
+                {mode === "signin" && (
+                  <div className="mt-2 text-right">
+                    <button
+                      type="button"
+                      onClick={goForgot}
+                      className="text-xs text-accent hover:underline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring rounded-sm"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
             <button
               type="submit"
@@ -182,24 +226,173 @@ export default function AuthScreen() {
                 ? "Please wait…"
                 : mode === "signin"
                   ? "Sign In"
-                  : "Create Account"}
+                  : mode === "signup"
+                    ? "Create Account"
+                    : "Send Reset Link"}
             </button>
           </form>
         </div>
 
         {/* Footer */}
         <p className="text-center text-xs text-muted-foreground mt-6">
-          {mode === "signin"
-            ? "Don't have an account?"
-            : "Already have an account?"}{" "}
-          <button
-            type="button"
-            onClick={switchMode}
-            className="text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring rounded-sm"
-          >
-            {mode === "signin" ? "Sign up" : "Sign in"}
-          </button>
+          {mode === "forgot" ? (
+            <>
+              Remember your password?{" "}
+              <button
+                type="button"
+                onClick={switchMode}
+                className="text-accent hover:underline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring rounded-sm"
+              >
+                Sign in
+              </button>
+            </>
+          ) : (
+            <>
+              {mode === "signin"
+                ? "Don't have an account?"
+                : "Already have an account?"}{" "}
+              <button
+                type="button"
+                onClick={switchMode}
+                className="text-accent hover:underline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring rounded-sm"
+              >
+                {mode === "signin" ? "Sign up" : "Sign in"}
+              </button>
+            </>
+          )}
         </p>
+      </div>
+    </div>
+  );
+}
+
+export function SetNewPassword() {
+  const { updatePassword } = useAuth();
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSuccessMessage("");
+
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+
+    const hasUpper = /[A-Z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecial = /[^A-Za-z0-9]/.test(password);
+    if (!hasUpper || !hasNumber || !hasSpecial) {
+      setError(
+        "Password must contain uppercase, number, and special character.",
+      );
+      return;
+    }
+
+    if (password !== confirm) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    setSubmitting(true);
+    const result = await updatePassword(password);
+    if (result.error) {
+      setError(result.error);
+    } else {
+      setSuccessMessage(
+        "Password updated. You can now sign in with your new password.",
+      );
+    }
+    setSubmitting(false);
+  };
+
+  return (
+    <div className="min-h-screen bg-dotgrid-glow flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-semibold text-foreground tracking-tight">
+            DevVoice
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Set a new password
+          </p>
+        </div>
+
+        <div className="bg-background border border-border rounded-xl p-6 shadow-lg">
+          {successMessage ? (
+            <div
+              className="p-3 rounded-lg bg-accent/10 border border-accent/30 text-sm text-accent"
+              role="status"
+            >
+              {successMessage}
+            </div>
+          ) : (
+            <>
+              {error && (
+                <div
+                  className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm text-destructive"
+                  role="alert"
+                  aria-live="assertive"
+                >
+                  {error}
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} noValidate>
+                <div className="mb-4">
+                  <label
+                    htmlFor="new-password"
+                    className="block text-sm font-medium text-foreground mb-1.5"
+                  >
+                    New password
+                  </label>
+                  <input
+                    id="new-password"
+                    type="password"
+                    autoComplete="new-password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    aria-invalid={!!error}
+                    className="w-full px-3 py-2.5 rounded-lg bg-muted border border-border text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring transition-colors text-sm"
+                  />
+                </div>
+
+                <div className="mb-6">
+                  <label
+                    htmlFor="confirm-password"
+                    className="block text-sm font-medium text-foreground mb-1.5"
+                  >
+                    Confirm password
+                  </label>
+                  <input
+                    id="confirm-password"
+                    type="password"
+                    autoComplete="new-password"
+                    placeholder="••••••••"
+                    value={confirm}
+                    onChange={(e) => setConfirm(e.target.value)}
+                    aria-invalid={!!error}
+                    className="w-full px-3 py-2.5 rounded-lg bg-muted border border-border text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring transition-colors text-sm"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="w-full py-2.5 px-4 rounded-lg bg-primary text-on-primary font-medium text-sm transition-all duration-150 hover:opacity-90 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                >
+                  {submitting ? "Please wait…" : "Update password"}
+                </button>
+              </form>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
