@@ -118,7 +118,7 @@ export default function AuthScreen() {
         </div>
 
         {/* Card */}
-        <div className="bg-background border border-border rounded-xl p-6 shadow-lg">
+        <div className="bg-surface border border-border rounded-xl p-6 shadow-lg">
           {/* Tabs */}
           {mode !== "forgot" && (
             <div className="flex mb-6 border-b border-border">
@@ -328,7 +328,7 @@ export function SetNewPassword() {
           </p>
         </div>
 
-        <div className="bg-background border border-border rounded-xl p-6 shadow-lg">
+        <div className="bg-surface border border-border rounded-xl p-6 shadow-lg">
           {error && (
             <div
               className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm text-destructive"

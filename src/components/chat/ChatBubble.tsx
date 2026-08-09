@@ -25,7 +25,7 @@ function ChatBubble({ role, content }: ChatBubbleProps) {
       className={`max-w-[80%] rounded-lg px-4 py-2 assistant-markdown ${
         isUser
           ? "ml-auto accent-surface rounded-br-sm"
-          : "mr-auto bg-muted border border-border rounded-bl-sm text-foreground"
+          : "mr-auto bg-surface border border-border rounded-bl-sm text-foreground"
       }`}
     >
       <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>

@@ -5,6 +5,7 @@ import { ConversationsProvider, useConversations } from "./contexts/Conversation
 import AuthScreen, { SetNewPassword } from "./components/AuthScreen";
 import ConversationSidebar from "./components/ConversationSidebar";
 import ConversationView from "./components/ConversationView";
+import { getSidebarCollapsed, setSidebarCollapsed } from "./lib/uiPrefs";
 
 export default function App() {
   return (
@@ -23,6 +24,17 @@ function AppContent(): React.ReactNode {
   const { user, loading, isRecovering } = useAuth();
   const { createConversation } = useConversations();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [sidebarCollapsed, setSidebarCollapsedState] = useState<boolean>(() =>
+    getSidebarCollapsed(),
+  );
+
+  const handleToggleSidebar = useCallback(() => {
+    setSidebarCollapsedState((c) => {
+      const next = !c;
+      setSidebarCollapsed(next);
+      return next;
+    });
+  }, []);
 
   const handleCreateNew = useCallback(async () => {
     const id = await createConversation();
@@ -57,6 +69,8 @@ function AppContent(): React.ReactNode {
         selectedConversationId={selectedId}
         onSelectConversation={setSelectedId}
         onCreateNew={handleCreateNew}
+        collapsed={sidebarCollapsed}
+        onToggle={handleToggleSidebar}
       />
       <div className="flex flex-1 flex-col">
         {selectedId != null ? (

@@ -18,6 +18,7 @@ export default {
         'on-accent': '#02140B',
         'accent-muted': '#1A3A2A',
         background: '#020617',
+        surface: '#0B1120',
         foreground: '#F8FAFC',
         muted: '#1A1E2F',
         'muted-foreground': '#94A3B8',

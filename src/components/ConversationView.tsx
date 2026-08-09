@@ -86,7 +86,7 @@ function ConversationView({ conversationId }: ConversationViewProps): React.Reac
       {/* Input */}
       <footer className="border-t border-border px-4 py-3">
         <div className="mx-auto max-w-4xl">
-          <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/40 p-2">
+          <div className="flex items-center gap-2 rounded-xl border border-border bg-surface p-2">
             <ModelSelector value={model} onChange={setModel} />
             <div className="flex min-w-0 flex-1 items-center gap-2">
               <ChatComposer
