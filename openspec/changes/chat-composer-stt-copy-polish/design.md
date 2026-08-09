@@ -32,6 +32,12 @@ See proposal.md - Why. The composer bar previously mixed ModelSelector + textare
 - **No borders between zones:** Header and footer have NO `border-b`/`border-t`. Zones are differentiated solely by `bg-surface` vs `bg-background`. Validated: major dark-theme AI chat UIs (ChatGPT, Claude, Cursor) use flat messages with subtle background differentiation and `dark:border-transparent` — borders create visual noise when surface tokens already separate zones. Follows Tailwind docs pattern (`dark:border-white/10` only when explicit separator is needed; otherwise omit).
 - **Editable title via inline input (chosen over rename modal/prompt).** Pattern matches ChatGPT/Claude inline rename (click-to-edit). Avoids modal/dialog DOM complexity. Local state in ConversationView, persistence via existing `updateTitle` from ConversationsContext. Confirms on Enter/blur, cancels on Escape.
 
+- **Pencil icon indicator:** Inline SVG (14px) rendered next to title. `opacity-40` default, `hover:opacity-70` on hover. Uses `inline-flex items-center gap-1.5` for alignment. `aria-hidden` for accessibility (title text is self-describing).
+
+- **Copy button flat design:** Removed `border border-border` from copy button. Relies on `bg-muted` for visual separation from bubble. Matches the flat, borderless aesthetic applied to header/footer zones.
+
+- **Edge Function source in repo:** `supabase/functions/research/index.ts` (418 lines) versioned alongside the frontend. Deployed via `supabase functions deploy research`. Enables code review, local development, and reproducible deploys.
+
 ## Risks / Trade-offs
 
 - **Composer bar density** → ModelSelector capped at max-w-[9.5rem] to prevent overflow on narrow screens.

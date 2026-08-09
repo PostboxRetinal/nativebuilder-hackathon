@@ -66,3 +66,23 @@
 - [x] 10.2 Replace static `<h1>` with click-to-edit input (autoFocus, Enter to save, Escape to cancel, blur to save).
 - [x] 10.3 Wire save to `updateTitle(conversationId, trimmedTitle)` from ConversationsContext.
 - [x] 10.4 Create `ConversationView.title.test.tsx` with 6 tests: initial h1, click-to-edit, Enter-save, Escape-cancel, blur-save, empty-fallback.
+
+## 11. Pencil icon indicator
+
+- [x] 11.1 Add `PencilIcon` SVG component to `ConversationView.tsx` (14px, inline, `aria-hidden`).
+- [x] 11.2 Render icon next to title with `opacity-40 hover:opacity-70` and `shrink-0`.
+- [x] 11.3 Use `inline-flex items-center gap-1.5` alignment on title row.
+
+## 12. Copy button flat design
+
+- [x] 12.1 Remove `border border-border` from copy button in `ChatMessage.tsx:109`.
+- [x] 12.2 Verify copy functionality still works (visual regression only, no behavioral change).
+
+## 13. Edge Function source in repo
+
+- [x] 13.1 Save `research` Edge Function source to `supabase/functions/research/index.ts` (418 lines).
+- [x] 13.2 Document deployment command in README.
+
+## 14. Gate final
+
+- [x] 14.1 Run `bun run typecheck` (0 errors), `bun run test` (122 tests passing), `bun run lint` (0 errors, 1 legacy warning), `bun run build` (OK).
