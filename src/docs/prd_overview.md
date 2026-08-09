@@ -111,7 +111,6 @@ Built for the native.builder hackathon, targeting developers working across any 
 - Text-to-speech (TTS) - answers are displayed as text only.
 - Mobile app - web-only React app.
 - Voice activity detection (auto-stop) - user manually stops recording.
-- Multi-language support - English only for MVP.
 - Pre-configured source lists - the AI decides sources dynamically via tool calling.
 - Streaming the answer (token-by-token) - the full answer appears when research completes.
 

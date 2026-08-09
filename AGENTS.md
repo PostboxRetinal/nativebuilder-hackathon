@@ -106,7 +106,6 @@ Client-side SPA on Vite. No Next.js, no Server Components, no "use server" — i
 
 ### Pending
 - End-to-end flow test (manual): auth -> record -> transcribe -> submit research -> see answer with sources
-- Verify account deletion E2E (task 3.3 of account-management change): delete-account Edge Function deployed + anon-rejection verified 2026-08-08; UI flow needs a live test-account check
 
 ### Security (OWASP Top 10 2021) - Plan: `.hermes/plans/2026-08-06_OWASP-e2e-check.md`
 - ESLint security plugin (`eslint-plugin-security`)
@@ -154,7 +153,7 @@ supabase/functions/
 
 | Service | Purpose | Integration |
 |---------|---------|-------------|
-| Supabase | Auth, DB, Edge Functions | SDK client + direct fetch for Edge |
+| Supabase | <br/>Auth: email/password via custom SMTP (Resend, smtp.resend.com:465, from `no-reply@auth.postboxretinal.tech`, rate 30/h). <br/>DB, Edge Functions | SDK client + direct fetch for Edge |
 | Speechmatics | Real-time STT | WebSocket via JWT from Edge Function |
 | Bright Data | SERP + Web Unlocker | Called by research Edge Function |
 | AI/ML API | LLM tool calling | Called by research Edge Function |

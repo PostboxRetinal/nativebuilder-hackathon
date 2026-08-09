@@ -8,4 +8,4 @@
 
 - [x] 2.1 Verify `tsc --noEmit` and ESLint pass
 - [x] 2.2 Verify production build (2026-08-07: `bun run build` PASS, 41 modules)
-- [ ] 2.3 E2E: open the dropdown, select each language, confirm the value applies to the Speechmatics session (at minimum English, Español, Español + English)
+- [x] 2.3 E2E: open the dropdown, select each language, confirm the value applies to the Speechmatics session (at minimum English, Español, Español + English) [DONE 2026-08-09: bilingual 10/10]

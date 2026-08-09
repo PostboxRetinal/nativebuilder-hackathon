@@ -15,7 +15,7 @@ A voice-powered developer research assistant built for the native.builder hackat
 - **Speechmatics STT**: official real-time client; the session JWT is passed via `client.start()` and never embedded in a URL.
 - **Research pipeline**: a Supabase Edge Function runs a search→read→synthesize loop and returns an answer plus clickable source citations.
 - **Persistent conversations**: auth-gated chat history with sequential ordering and real-time updates.
-- **Auth**: email/password via Supabase, enforced password policy, and rate-limited sign-in attempts.
+- **Auth**: email/password via Supabase, enforced password policy, and server-side rate limiting on auth endpoints (Supabase-managed).
 - **Content Security Policy**: self-only sources with SRI hashing on the production build, Tailwind support in dev.
 
 ## Architecture
@@ -55,7 +55,7 @@ Requirements: a Supabase project with the `speechmatics-token` and `research` Ed
 
 Security posture and system behavior are specified and verified through the SDD in `openspec/` (spec-driven development):
 
-- `security-posture`, `authentication`, `voice-input`, `research-pipeline`, `conversation-management`, `supabase-foundation`
+- `security-posture`, `authentication`, `voice-input`, `research-pipeline`, `conversation-management`, `supabase-foundation`, `account-management`, `test-framework`
 - Implementation is validated with `bun typecheck`, `bun lint` (eslint-plugin-security), and `bun audit`.
 
 ## License
