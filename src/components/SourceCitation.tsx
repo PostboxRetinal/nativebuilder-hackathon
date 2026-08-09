@@ -1,4 +1,4 @@
-import type { Source } from "../hooks/useMessages";
+import type { Source } from "../types/models";
 
 function SourceCitation({ source }: { source: Source }) {
   let host = source.url;

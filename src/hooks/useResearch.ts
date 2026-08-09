@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { supabase } from "../lib/supabase";
-import type { Source } from "./useMessages";
+import type { Source } from "../types/models";
 
 interface ResearchResult {
   answer: string;

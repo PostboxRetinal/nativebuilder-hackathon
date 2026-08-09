@@ -1,14 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 import type { Database } from "../lib/database.types";
+import type { Message, Source } from "../types/models";
 
 type MessageRow = Database["public"]["Tables"]["messages"]["Row"];
-
-export type Source = { title: string; url: string };
-
-export type Message = Pick<MessageRow, "id" | "role" | "content" | "created_at" | "sources"> & {
-  order_index: number;
-};
 
 // Serializes addMessage read-then-insert across all hook instances so two
 // concurrent calls can never compute the same next order_index. Each insert

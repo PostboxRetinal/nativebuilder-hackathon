@@ -144,6 +144,8 @@ src/
   lib/
     supabase.ts              # Supabase client instance
     database.types.ts        # Generated DB types
+  types/
+    models.ts                # Shared domain types: Message, Source
 supabase/functions/
   delete-account/index.ts   # Deployable EF: verifies caller JWT, deletes user's data + auth user
 ```

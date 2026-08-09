@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import MessageList from '../MessageList'
-import type { Message } from '../../hooks/useMessages'
+import type { Message } from '../../types/models'
 
 function makeMessage(overrides: Partial<Message>): Message {
   return {

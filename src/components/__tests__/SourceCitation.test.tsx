@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import SourceCitation from '../SourceCitation'
-import type { Source } from '../../hooks/useMessages'
+import type { Source } from '../../types/models'
 
 describe('SourceCitation', () => {
   const source: Source = {

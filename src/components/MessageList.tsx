@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import type { Message, Source } from "../hooks/useMessages";
+import type { Message, Source } from "../types/models";
 import SourceCitation from "./SourceCitation";
 
 interface MessageListProps {
