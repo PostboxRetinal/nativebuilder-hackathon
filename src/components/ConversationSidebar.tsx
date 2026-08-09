@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useConversations } from "../hooks/useConversations";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -41,11 +41,33 @@ function ConversationSidebar({
   onCreateNew,
 }: ConversationSidebarProps): React.ReactNode {
   const { conversations, loading, deleteConversation } = useConversations();
-  const { user, signOut } = useAuth();
+  const { user, signOut, deleteAccount } = useAuth();
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const handleSignOut = useCallback(async () => {
     await signOut();
   }, [signOut]);
+
+  const closeDeleteConfirm = useCallback(() => {
+    if (deleting) return;
+    setShowDeleteConfirm(false);
+    setDeleteError(null);
+  }, [deleting]);
+
+  const handleDeleteAccount = useCallback(async () => {
+    setDeleting(true);
+    setDeleteError(null);
+    const { error } = await deleteAccount();
+    if (error != null) {
+      setDeleteError(error);
+      setDeleting(false);
+      return;
+    }
+    // On success AuthContext signs out; the app renders the auth screen.
+  }, [deleteAccount]);
 
   const handleSelect = useCallback(
     (id: string) => {
@@ -151,10 +173,64 @@ function ConversationSidebar({
             Sign out
           </button>
         </div>
-        <div className="mt-3 text-center text-[10px] text-zinc-500">
-          v{__APP_VERSION__}
+        <div className="mt-3 flex items-center justify-between text-[10px] text-zinc-500">
+          <span>v{__APP_VERSION__}</span>
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            data-testid="delete-account"
+            className="text-zinc-600 transition-colors hover:text-red-400"
+          >
+            Delete account
+          </button>
         </div>
       </div>
+
+      {showDeleteConfirm && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-account-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+        >
+          <div className="w-full max-w-sm rounded-lg border border-zinc-800 bg-zinc-950 p-5">
+            <h2
+              id="delete-account-title"
+              className="text-base font-semibold text-white"
+            >
+              Delete account?
+            </h2>
+            <p className="mt-2 text-sm text-zinc-400">
+              This permanently deletes your account and all conversations. This
+              action cannot be undone.
+            </p>
+            {deleteError != null && (
+              <p
+                data-testid="delete-account-error"
+                className="mt-2 text-xs text-red-400"
+              >
+                {deleteError}
+              </p>
+            )}
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                onClick={closeDeleteConfirm}
+                disabled={deleting}
+                className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs text-zinc-200 transition-colors hover:border-zinc-500 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleting}
+                data-testid="confirm-delete-account"
+                className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-red-500 disabled:opacity-50"
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

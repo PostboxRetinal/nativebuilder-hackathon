@@ -62,7 +62,10 @@ function MessageList({
           {message.role === "assistant" && (
             <div className="mr-auto flex flex-col">
               {normalizeSources(message.sources).map((s, i) => (
-                <SourceCitation key={i} source={s} />
+                <SourceCitation
+                  key={s.url ? `${s.url}-${i}` : `source-${i}`}
+                  source={s}
+                />
               ))}
             </div>
           )}

@@ -102,9 +102,11 @@ Client-side SPA on Vite. No Next.js, no Server Components, no "use server" — i
 7. Conversation UI: `ConversationSidebar.tsx`, `MessageList.tsx`, `ConversationView.tsx`
 8. App Assembly: AuthProvider > AuthGate > Sidebar + MessageList + VoiceInput layout
 9. Research Pipeline: `useResearch.ts` hook + `SourceCitation.tsx` cards + `Message` type widened with `sources` + wiring in `ConversationView` (user msg -> research EF -> assistant msg with sources)
+10. Account Management (frontend): sidebar account footer (email + avatar + Sign out), Delete account action with explicit confirmation dialog, wired to `delete-account` EF via `AuthContext.deleteAccount()`. Backend EF source versioned at `supabase/functions/delete-account/index.ts` (requires deployment to the project Supabase).
 
 ### Pending
 - End-to-end flow test (manual): auth -> record -> transcribe -> submit research -> see answer with sources
+- Verify account deletion E2E (task 3.3 of account-management change): delete-account Edge Function deployed + anon-rejection verified 2026-08-08; UI flow needs a live test-account check
 
 ### Security (OWASP Top 10 2021) - Plan: `.hermes/plans/2026-08-06_OWASP-e2e-check.md`
 - ESLint security plugin (`eslint-plugin-security`)
@@ -112,7 +114,7 @@ Client-side SPA on Vite. No Next.js, no Server Components, no "use server" — i
 - Add Content Security Policy header
 - Strengthen password policy (min 8 chars, complexity)
 - Verify Supabase RLS policies on `conversations` + `messages`  [DONE 2026-08-07: verified via Supabase MCP - all CRUD scoped by auth.uid(), anon has no access]
-- Add rate limiting on auth endpoints
+- Rate limiting on auth endpoints: enforce server-side (Supabase handles auth endpoint protection); client-side throttling was removed as it provides no security control
 - Harden Vite build config (`minify: 'esbuild'`, `sourcemap`)
 - Run `bun audit` - fix high/critical CVEs  [DONE 2026-08-07: audit clean, no vulnerabilities]
 - Generate OWASP audit report
@@ -142,7 +144,8 @@ src/
   lib/
     supabase.ts              # Supabase client instance
     database.types.ts        # Generated DB types
-supabase/                    # (Empty - Edge Functions deployed via natively, not in repo)
+supabase/functions/
+  delete-account/index.ts   # Deployable EF: verifies caller JWT, deletes user's data + auth user
 ```
 
 ## External Services

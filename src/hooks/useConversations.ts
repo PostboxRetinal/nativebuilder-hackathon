@@ -63,6 +63,9 @@ export function useConversations(): UseConversationsReturn {
 
     fetchAndSet();
 
+    // Prevent re-subscribing if this effect re-runs while already connected.
+    if (channelRef.current?.state === "joined") return;
+
     const channel = supabase
       .channel(`conversations-changes-${crypto.randomUUID()}`)
       .on(
@@ -80,7 +83,11 @@ export function useConversations(): UseConversationsReturn {
           }
         },
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          console.error("[useConversations] realtime error:", status, err);
+        }
+      });
 
     channelRef.current = channel;
 

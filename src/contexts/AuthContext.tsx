@@ -15,6 +15,8 @@ interface AuthContextValue {
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
   signUp: (email: string, password: string) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
+  // Permanently delete the current account and its data, then sign out.
+  deleteAccount: () => Promise<{ error?: string }>;
   isRecovering: boolean;
   requestPasswordReset: (
     email: string,
@@ -22,9 +24,6 @@ interface AuthContextValue {
   updatePassword: (
     password: string,
   ) => Promise<{ error?: string }>;
-  // Rate limiting
-  authRateLimited: () => boolean;
-  authResetRateLimit: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -34,32 +33,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isRecovering, setIsRecovering] = useState(false);
-  // OWASP A07: Rate limiting - 5 attempts per 60s
-  const [authAttempts, setAuthAttempts] = useState<
-    { ts: number; ip: string }[]
-  >([]);
-
-  const AUTH_WINDOW_MS = 60_000;
-  const AUTH_MAX_ATTEMPTS = 5;
-
-  const now = Date.now();
-  const windowKey = `${now - (now % AUTH_WINDOW_MS)}`;
-  const attemptsInWindow = authAttempts.filter(
-    (a) => a.ts > now - AUTH_WINDOW_MS,
-  ).length;
-
-  const authRateLimited = () => attemptsInWindow >= AUTH_MAX_ATTEMPTS;
-
-  const recordAuthAttempt = () => {
-    setAuthAttempts((prev) => [
-      ...prev.filter((a) => a.ts > now - AUTH_WINDOW_MS),
-      { ts: now, ip: windowKey },
-    ]);
-  };
-
-  const authResetRateLimit = () => {
-    setAuthAttempts([]);
-  };
 
   useEffect(() => {
     // Get initial session
@@ -85,10 +58,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    if (authRateLimited()) {
-      return { error: "Too many attempts. Please try again later." };
-    }
-    recordAuthAttempt();
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -98,10 +67,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUp = async (email: string, password: string) => {
-    if (authRateLimited()) {
-      return { error: "Too many attempts. Please try again later." };
-    }
-    recordAuthAttempt();
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -117,11 +82,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
   };
 
+  const deleteAccount = async (): Promise<{ error?: string }> => {
+    const { error } = await supabase.functions.invoke("delete-account", {
+      body: {},
+    });
+    if (error != null) return { error: error.message };
+    await supabase.auth.signOut();
+    return {};
+  };
+
   const requestPasswordReset = async (email: string) => {
-    if (authRateLimited()) {
-      return { error: "Too many attempts. Please try again later." };
-    }
-    recordAuthAttempt();
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: window.location.origin,
     });
@@ -145,11 +115,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signIn,
         signUp,
         signOut,
+        deleteAccount,
         isRecovering,
         requestPasswordReset,
         updatePassword,
-        authRateLimited,
-        authResetRateLimit,
       }}
     >
       {children}

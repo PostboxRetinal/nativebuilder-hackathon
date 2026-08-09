@@ -1,5 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { isPasswordValid } from "../lib/password";
+import PasswordRequirements from "./PasswordRequirements";
 
 type AuthMode = "signin" | "signup" | "forgot";
 
@@ -47,12 +49,9 @@ export default function AuthScreen() {
     }
 
     if (mode === "signup") {
-      const hasUpper = /[A-Z]/.test(password);
-      const hasNumber = /[0-9]/.test(password);
-      const hasSpecial = /[^A-Za-z0-9]/.test(password);
-      if (!hasUpper || !hasNumber || !hasSpecial) {
+      if (!isPasswordValid(password)) {
         setError(
-          "Password must contain uppercase, number, and special character.",
+          "Password must be at least 8 characters and include uppercase, lowercase, number, and special character.",
         );
         return;
       }
@@ -203,6 +202,9 @@ export default function AuthScreen() {
                   aria-invalid={!!error}
                   className="w-full px-3 py-2.5 rounded-lg bg-muted border border-border text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring transition-colors text-sm"
                 />
+                {mode === "signup" && password.length > 0 && (
+                  <PasswordRequirements value={password} />
+                )}
                 {mode === "signin" && (
                   <div className="mt-2 text-right">
                     <button
@@ -279,17 +281,9 @@ export function SetNewPassword() {
     setError("");
     setSuccessMessage("");
 
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
-      return;
-    }
-
-    const hasUpper = /[A-Z]/.test(password);
-    const hasNumber = /[0-9]/.test(password);
-    const hasSpecial = /[^A-Za-z0-9]/.test(password);
-    if (!hasUpper || !hasNumber || !hasSpecial) {
+    if (!isPasswordValid(password)) {
       setError(
-        "Password must contain uppercase, number, and special character.",
+        "Password must be at least 8 characters and include uppercase, lowercase, number, and special character.",
       );
       return;
     }
@@ -361,6 +355,7 @@ export function SetNewPassword() {
                     aria-invalid={!!error}
                     className="w-full px-3 py-2.5 rounded-lg bg-muted border border-border text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring transition-colors text-sm"
                   />
+                  {password.length > 0 && <PasswordRequirements value={password} />}
                 </div>
 
                 <div className="mb-6">

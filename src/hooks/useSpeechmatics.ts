@@ -1,6 +1,10 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { supabase } from "../lib/supabase";
 import { RealtimeClient } from "@speechmatics/real-time-client";
+import type {
+  AddPartialTranscript,
+  AddTranscript,
+} from "@speechmatics/real-time-client";
 
 type RecordingState = "idle" | "recording" | "processing" | "done" | "error";
 
@@ -236,14 +240,9 @@ export function useSpeechmatics(
 
       client.addEventListener("receiveMessage", ({ data }) => {
         if (data.message === "AddPartialTranscript") {
-          const text = data.results
-            .map((r: any) => r.alternatives?.[0]?.content ?? "")
-            .join(" ");
-          setPartialText(text);
+          setPartialText(joinTranscript(data));
         } else if (data.message === "AddTranscript") {
-          const text = data.results
-            .map((r: any) => r.alternatives?.[0]?.content ?? "")
-            .join(" ");
+          const text = joinTranscript(data);
           if (text) {
             transcriptAccRef.current +=
               (transcriptAccRef.current ? " " : "") + text;
@@ -347,4 +346,21 @@ function float32ToPcm16(float32: Float32Array): Int16Array {
     pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
   }
   return pcm16;
+}
+
+/**
+ * Joins the first alternative content of each transcript result into a
+ * space-separated string. Both AddPartialTranscript and AddTranscript carry
+ * `results: RecognitionResult[]`, so this uses the SDK's exported types and
+ * each `result.alternatives?.[0]?.content` is already typed — no `any` casts.
+ */
+function joinTranscript(
+  data: AddPartialTranscript | AddTranscript,
+): string {
+  const parts: string[] = [];
+  for (const result of data.results) {
+    const content = result.alternatives?.[0]?.content ?? "";
+    if (content) parts.push(content);
+  }
+  return parts.join(" ");
 }

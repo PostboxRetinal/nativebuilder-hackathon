@@ -10,6 +10,11 @@ export type Message = Pick<MessageRow, "id" | "role" | "content" | "created_at" 
   order_index: number;
 };
 
+// Serializes addMessage read-then-insert across all hook instances so two
+// concurrent calls can never compute the same next order_index. Each insert
+// awaits the previous one's read+write to complete before reading again.
+let addQueue: Promise<unknown> = Promise.resolve();
+
 type UseMessagesReturn = {
   messages: Message[];
   loading: boolean;
@@ -61,6 +66,9 @@ export function useMessages(
 
     init();
 
+    // Prevent re-subscribing if this effect re-runs while already connected.
+    if (channelRef.current?.state === "joined") return;
+
     const channel = supabase
       .channel(`messages-${conversationId}-${crypto.randomUUID()}`)
       .on(
@@ -78,7 +86,11 @@ export function useMessages(
           }
         },
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          console.error("[useMessages] realtime error:", status, err);
+        }
+      });
 
     channelRef.current = channel;
 
@@ -90,23 +102,30 @@ export function useMessages(
   }, [conversationId]);
 
   const addMessage = useCallback(
-    async (
+    (
       role: MessageRow["role"],
       content: string,
       sources?: Source[],
     ): Promise<void> => {
-      // Calculate next order_index
-      const { data: lastMessage, error: lastError } = await supabase
-        .from("messages")
-        .select("order_index")
-        .eq("conversation_id", conversationId)
-        .order("order_index", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      // Chain onto the shared queue so concurrent calls (e.g. a fast follow-up
+      // or user+assistant inserts) serialize their read-then-insert and never
+      // reuse the same order_index.
+      const run = addQueue.then(async () => {
+        const { data: lastMessage, error: lastError } = await supabase
+          .from("messages")
+          .select("order_index")
+          .eq("conversation_id", conversationId)
+          .order("order_index", { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-      // On absence of rows (.maybeSingle → null) or read error, fall back to
-      // current local count so the first insert still gets a sequential index.
-      if (lastError == null) {
+        // On absence of rows (.maybeSingle → null) or read error, fall back to
+        // current local count so the first insert still gets a sequential index.
+        if (lastError != null) {
+          console.error("[useMessages] last-message read error:", lastError);
+          return;
+        }
+
         const nextIndex = (lastMessage?.order_index ?? messages.length) + 1;
 
         const { data: inserted, error } = await supabase
@@ -127,9 +146,10 @@ export function useMessages(
           // Reflect the insert immediately, independent of the realtime feed.
           setMessages((prev) => [...prev, inserted as Message]);
         }
-      } else {
-        console.error("[useMessages] last-message read error:", lastError);
-      }
+      });
+
+      addQueue = run.catch(() => {});
+      return run;
     },
     [conversationId, messages],
   );
