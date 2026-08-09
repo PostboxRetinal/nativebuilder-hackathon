@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { Message, Source } from "../../types/models";
 import ChatBubble from "./ChatBubble";
 import SourceCitation from "../SourceCitation";
@@ -23,6 +24,28 @@ function formatRelativeTime(dateString: string): string {
   return new Date(dateString).toLocaleDateString();
 }
 
+// Inline copy icon (avoids pulling in an icon library).
+function CopyIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+    </svg>
+  );
+}
+
 interface ChatMessageProps {
   role: Message["role"];
   content: string;
@@ -33,6 +56,30 @@ interface ChatMessageProps {
 
 function ChatMessage({ role, content, sources, isFirstInGroup = false, createdAt }: ChatMessageProps) {
   const citations = role === "assistant" ? normalizeSources(sources) : [];
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(content);
+      } else {
+        // Fallback for insecure contexts: deprecated execCommand via temp textarea.
+        const ta = document.createElement("textarea");
+        ta.value = content;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      setCopied(false);
+    }
+  };
+
   return (
     <div
       className={`flex flex-col gap-1 ${isFirstInGroup ? "mt-3 first:mt-0" : ""}`}
@@ -47,7 +94,24 @@ function ChatMessage({ role, content, sources, isFirstInGroup = false, createdAt
           <span>{formatRelativeTime(createdAt)}</span>
         </div>
       )}
-      <ChatBubble role={role} content={content} />
+      <div className="flex items-start gap-2">
+        <ChatBubble role={role} content={content} />
+        {role === "assistant" && (
+          <button
+            type="button"
+            onClick={handleCopy}
+            aria-label={copied ? "Copied" : "Copy response"}
+            title="Copy response"
+            className="mt-1 shrink-0 rounded-md border border-border bg-muted p-1.5 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
+          >
+            {copied ? (
+              <span className="text-[10px] font-medium">Copied</span>
+            ) : (
+              <CopyIcon className="h-4 w-4" />
+            )}
+          </button>
+        )}
+      </div>
       {citations.length > 0 && (
         <div className="mr-auto flex flex-wrap items-center gap-1.5 pt-1">
           {citations.map((s, i) => (

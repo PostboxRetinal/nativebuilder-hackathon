@@ -20,7 +20,7 @@ interface ModelCategory {
 export const MODEL_CATEGORIES: ModelCategory[] = [
   {
     key: "budget",
-    label: "Económicos",
+    label: "Budget",
     models: [
       { id: "openai/gpt-4o-mini", label: "GPT-4o mini", priceIn: 0.195, priceOut: 0.78 },
       { id: "deepseek/deepseek-v4-flash", label: "DeepSeek V4 Flash", priceIn: 0.182, priceOut: 0.364 },
@@ -31,7 +31,7 @@ export const MODEL_CATEGORIES: ModelCategory[] = [
   },
   {
     key: "latest",
-    label: "Más recientes",
+    label: "Latest",
     models: [
       { id: "openai/gpt-5.6-luna", label: "GPT-5.6 Luna", priceIn: 1.3, priceOut: 7.8 },
       { id: "openai/gpt-5.6-sol", label: "GPT-5.6 Sol", priceIn: 6.5, priceOut: 39 },
@@ -53,51 +53,46 @@ export const MODEL_CATEGORIES: ModelCategory[] = [
   },
 ] ;
 
-// Flat lookup list used for the price caption and default resolution. IDs are
-// unique across categories, so a plain `.find` is safe.
+// Combined flat lookup list. IDs are unique across categories, so a plain
+// `.find` is safe.
 export const RESEARCH_MODELS = MODEL_CATEGORIES.flatMap((c) => c.models);
 
 // The model the `Default` option resolves to (must match the EF's DEFAULT_MODEL).
 export const DEFAULT_MODEL_ID = "openai/gpt-5.6-luna";
+
+// Resolve the active model (the Default fallback) so callers can render the
+// price caption without duplicating the lookup.
+export function getActiveModel(value: string | null) {
+  return RESEARCH_MODELS.find((m) => m.id === (value ?? DEFAULT_MODEL_ID)) ?? null;
+}
 
 interface ModelSelectorProps {
   value: string | null;
   onChange: (model: string | null) => void;
 }
 
-function ModelSelector({
-  value,
-  onChange,
-}: ModelSelectorProps): React.ReactNode {
-  const active = RESEARCH_MODELS.find((m) => m.id === (value ?? DEFAULT_MODEL_ID));
+function ModelSelector({ value, onChange }: ModelSelectorProps): React.ReactNode {
   return (
-    <div className="flex flex-col">
-      <label className="flex items-center gap-2 text-xs text-muted-foreground">
-        <span className="whitespace-nowrap">Model</span>
-        <select
-          aria-label="Research model"
-          value={value ?? ""}
-          onChange={(e) => onChange(e.target.value === "" ? null : e.target.value)}
-          className="rounded-md border border-border bg-muted px-2 py-1 text-xs font-medium text-foreground transition-colors focus:border-accent/60 cursor-pointer"
-        >
-          <option value="">Default</option>
-          {MODEL_CATEGORIES.map((cat) => (
-            <optgroup key={cat.key} label={cat.label}>
-              {cat.models.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.label}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
-      </label>
-      {active && (
-        <span className="mt-1 text-[11px] font-mono text-muted-foreground">
-          ${active.priceIn} in / ${active.priceOut} out (per 1M tokens)
-        </span>
-      )}
-    </div>
+    <label className="flex items-center">
+      <span className="sr-only">Model</span>
+      <select
+        aria-label="Research model"
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value === "" ? null : e.target.value)}
+        className="h-11 rounded-lg border border-border bg-muted px-3 text-xs font-medium text-foreground transition-colors focus:border-accent/60 cursor-pointer"
+      >
+        <option value="">Default</option>
+        {MODEL_CATEGORIES.map((cat) => (
+          <optgroup key={cat.key} label={cat.label}>
+            {cat.models.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.label}
+              </option>
+            ))}
+          </optgroup>
+        ))}
+      </select>
+    </label>
   );
 }
 

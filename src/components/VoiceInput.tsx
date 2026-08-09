@@ -127,17 +127,17 @@ export default function VoiceInput({ onTranscriptFinal }: VoiceInputProps) {
   }
 
   // ---- Main recording UI ----
+  const showPreview = state === "recording" || !!partialText || !!finalText;
   return (
-    <div className="flex flex-col items-stretch gap-3">
-      {/* Transcription Preview */}
-      <TranscriptionPreview
-        partialText={partialText}
-        finalText={finalText}
-        isRecording={state === "recording"}
-      />
-
-      {/* Record button left, Language selector right of it */}
-      <div className="flex items-center justify-between gap-3">
+    <>
+      {showPreview && (
+        <TranscriptionPreview
+          partialText={partialText}
+          finalText={finalText}
+          isRecording={state === "recording"}
+        />
+      )}
+      <div className="flex items-center gap-2">
         <RecordButton
           state={state}
           error={error}
@@ -147,7 +147,7 @@ export default function VoiceInput({ onTranscriptFinal }: VoiceInputProps) {
         />
         <LanguageToggle language={language} onChange={setLanguage} />
       </div>
-    </div>
+    </>
   );
 }
 
@@ -160,7 +160,7 @@ function LanguageToggle({
 }) {
   return (
     <label className="flex items-center gap-2 text-xs text-muted-foreground">
-      <span className="whitespace-nowrap">Language</span>
+      <span className="whitespace-nowrap">STT Language</span>
       <select
         aria-label="Transcription language"
         value={language}
@@ -267,30 +267,21 @@ function RecordButton({
   }
 
   return (
-    <div className="flex flex-col items-center gap-2">
-      <button
-        type="button"
-        onClick={onClick}
-        disabled={disabled}
-        aria-label={label}
-        aria-pressed={isRecording}
-        className={`w-[4.5rem] h-[4.5rem] rounded-full flex items-center justify-center transition-all duration-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring cursor-pointer ${buttonClass}`}
-      >
-        {icon === "spinner" ? (
-          <SpinnerIcon className="w-7 h-7" />
-        ) : icon === "square" ? (
-          <SquareIcon className="w-7 h-7" />
-        ) : (
-          <MicIcon className="w-7 h-7" />
-        )}
-      </button>
-      <span
-        className={`text-xs font-medium transition-colors duration-200 ${
-          isError ? "text-destructive" : "text-muted-foreground"
-        }`}
-      >
-        {isError ? error : isProcessing ? "Finalizing…" : isRecording ? "Listening…" : "Tap to record"}
-      </span>
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={label}
+      aria-pressed={isRecording}
+      className={`h-11 w-11 shrink-0 flex items-center justify-center rounded-lg transition-all duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring cursor-pointer ${buttonClass}`}
+    >
+      {icon === "spinner" ? (
+        <SpinnerIcon className="w-5 h-5" />
+      ) : icon === "square" ? (
+        <SquareIcon className="w-5 h-5" />
+      ) : (
+        <MicIcon className="w-5 h-5" />
+      )}
+    </button>
   );
 }

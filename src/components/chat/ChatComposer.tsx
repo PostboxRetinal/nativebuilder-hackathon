@@ -23,25 +23,21 @@ function ChatComposer({ value, onChange, onSubmit, disabled = false }: ChatCompo
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-1 items-end gap-2">
+    <form onSubmit={handleSubmit} className="flex flex-1 items-center gap-2">
       <textarea
         key="message-input"
         value={value}
-        onChange={(e) => {
-          e.target.style.height = "auto";
-          e.target.style.height = `${Math.min(e.target.scrollHeight, 176)}px`;
-          onChange(e.target.value);
-        }}
+        onChange={(e) => onChange(e.target.value)}
         onKeyDown={handleKeyDown}
         disabled={disabled}
-        placeholder="Type a message... (Enter to send, Shift+Enter for newline)"
+        placeholder="Type a message..."
         rows={1}
-        className="max-h-44 flex-1 resize-none rounded-lg border border-border bg-muted px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60 outline-none transition-colors focus:border-accent/60 focus:ring-1 focus:ring-accent/40 disabled:opacity-60"
+        className="min-h-11 flex-1 resize-y rounded-lg border border-border bg-muted px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 outline-none transition-colors focus:border-accent/60 focus:ring-1 focus:ring-accent/40 disabled:opacity-60"
       />
       <button
         type="submit"
         disabled={disabled}
-        className="rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-on-accent transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50"
+        className="h-11 shrink-0 rounded-lg bg-accent px-4 text-sm font-semibold text-on-accent transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50"
       >
         Send
       </button>

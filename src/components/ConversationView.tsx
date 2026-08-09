@@ -4,7 +4,7 @@ import { useConversations } from "../contexts/ConversationsContext";
 import { useResearch } from "../hooks/useResearch";
 import MessageList from "./MessageList";
 import VoiceInput from "./VoiceInput";
-import ModelSelector, { DEFAULT_MODEL_ID, RESEARCH_MODELS } from "./ModelSelector";
+import ModelSelector, { getActiveModel } from "./ModelSelector";
 import ChatComposer from "./chat/ChatComposer";
 
 interface ConversationViewProps {
@@ -21,7 +21,10 @@ function ConversationView({ conversationId }: ConversationViewProps): React.Reac
 
   const conversation = conversations.find((c) => c.id === conversationId);
   const currentTitle = conversation?.title ?? "New Conversation";
-  const activeModel = RESEARCH_MODELS.find((m) => m.id === (model ?? DEFAULT_MODEL_ID));
+  const activeModel = getActiveModel(model);
+  const activeModelLabel = activeModel
+    ? `${activeModel.label} · $${activeModel.priceIn} in / $${activeModel.priceOut} out (per 1M tokens)`
+    : "";
 
   const sendMessage = useCallback(
     async (text: string) => {
@@ -68,11 +71,6 @@ function ConversationView({ conversationId }: ConversationViewProps): React.Reac
               <span>Researching</span>
             </span>
           )}
-          {activeModel && (
-            <span className="rounded-full border border-border bg-muted px-2.5 py-1 text-[11px] font-mono text-muted-foreground">
-              {activeModel.label}
-            </span>
-          )}
         </div>
       </header>
 
@@ -86,19 +84,27 @@ function ConversationView({ conversationId }: ConversationViewProps): React.Reac
       </main>
 
       {/* Input */}
-      <footer className="border-t border-border p-4">
-        <div className="mx-auto flex max-w-4xl flex-col gap-2">
-          <div className="flex items-center gap-4">
-            <ChatComposer
-              value={textInput}
-              onChange={setTextInput}
-              onSubmit={handleSubmit}
-              disabled={researching}
-            />
-            <VoiceInput onTranscriptFinal={sendMessage} />
-          </div>
-          <div className="flex justify-center">
+      <footer className="border-t border-border px-4 py-3">
+        <div className="mx-auto max-w-4xl">
+          <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/40 p-2">
             <ModelSelector value={model} onChange={setModel} />
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+              <ChatComposer
+                value={textInput}
+                onChange={setTextInput}
+                onSubmit={handleSubmit}
+                disabled={researching}
+              />
+              <VoiceInput onTranscriptFinal={sendMessage} />
+            </div>
+          </div>
+          <div className="flex items-center justify-between px-1 pt-1.5">
+            <span className="truncate pr-3 text-[11px] font-mono text-muted-foreground/70">
+              {activeModelLabel}
+            </span>
+            <span className="shrink-0 text-[11px] text-muted-foreground/50">
+              Enter to send · Shift+Enter for newline
+            </span>
           </div>
         </div>
       </footer>

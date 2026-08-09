@@ -77,4 +77,12 @@ describe("ChatComposer", () => {
     await user.click(screen.getByRole("button", { name: "Send" }));
     expect(onSubmit).not.toHaveBeenCalled();
   });
+
+  it("has a fixed resizable textarea that does not auto-grow", async () => {
+    const { container } = render(<ChatComposer value="a" onChange={() => {}} onSubmit={() => {}} />);
+    const input = container.querySelector("textarea") as HTMLTextAreaElement;
+    expect(input.className).toContain("resize-y");
+    expect(input.className).not.toContain("resize-none");
+    expect(input.style.height).toBe("");
+  });
 });
