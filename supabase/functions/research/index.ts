@@ -356,7 +356,7 @@ function extractSources(
   answer: string,
   fetchedUrls: Set<string>,
 ): { title: string; url: string }[] {
-  const urlRegex = /https?:\/\/[^\s\)\]]+/g;
+  const urlRegex = /https?:\/\/[^\s)\]]+/g;
   const foundUrls = new Set<string>();
   let match;
   while ((match = urlRegex.exec(answer)) !== null) {
