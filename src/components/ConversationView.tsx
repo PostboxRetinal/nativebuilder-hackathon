@@ -56,9 +56,6 @@ function ConversationView({ conversationId }: ConversationViewProps): React.Reac
       {/* Top bar */}
       <header className="flex items-center gap-4 border-b border-zinc-800 p-4">
         <h1 className="text-lg font-medium">{currentTitle}</h1>
-        <div className="ml-auto">
-          <ModelSelector value={model} onChange={setModel} />
-        </div>
       </header>
 
       {/* Messages */}
@@ -72,13 +69,18 @@ function ConversationView({ conversationId }: ConversationViewProps): React.Reac
 
       {/* Input */}
       <footer className="border-t border-zinc-800 p-4">
-        <div className="mx-auto flex max-w-4xl items-center gap-4">
-          <ChatComposer
-            value={textInput}
-            onChange={setTextInput}
-            onSubmit={handleSubmit}
-          />
-          <VoiceInput onTranscriptFinal={sendMessage} />
+        <div className="mx-auto flex max-w-4xl flex-col gap-2">
+          <div className="flex items-center gap-4">
+            <ChatComposer
+              value={textInput}
+              onChange={setTextInput}
+              onSubmit={handleSubmit}
+            />
+            <VoiceInput onTranscriptFinal={sendMessage} />
+          </div>
+          <div className="flex justify-center">
+            <ModelSelector value={model} onChange={setModel} />
+          </div>
         </div>
       </footer>
     </div>
