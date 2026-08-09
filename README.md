@@ -1,6 +1,21 @@
-# DevVoice
 
-A voice-powered developer research assistant built for the native.builder hackathon. Speak a question, hear it transcribed, and get a researched answer with clickable source citations — all in a dark, AMOLED-first interface.
+![DevVoice Banner](banner_2k.jpeg)
+
+> A voice-powered developer research assistant built for the [native.builder](https://lablab.ai/ai-hackathons/nativebuilder-build-without-limits) hackathon. Speak a question, hear it transcribed, and get a researched answer with clickable source citations - all in a dark, AMOLED-first interface.
+
+## Table of Contents
+
+- [Table of Contents](#table-of-contents)
+- [Highlights](#highlights)
+- [Features](#features)
+- [Architecture](#architecture)
+- [Tech Stack](#tech-stack)
+- [Getting Started](#getting-started)
+  - [Deploying the Edge Function](#deploying-the-edge-function)
+- [Validation](#validation)
+- [SDD (Spec-Driven Development)](#sdd-spec-driven-development)
+- [Acknowledgments](#acknowledgments)
+- [License](#license)
 
 ## Highlights
 
@@ -17,6 +32,8 @@ A voice-powered developer research assistant built for the native.builder hackat
 - **Web search integration**: Bright Data SERP API (Google searches) + Web Unlocker (page fetching) power the research agent.
 - **Markdown answers**: assistant responses render as formatted markdown (headings, lists, code, tables, links) with source citations, XSS-safe by default.
 - **Persistent conversations**: auth-gated chat history with sequential ordering and real-time updates.
+- **Editable conversation titles**: click-to-edit inline, saved to Supabase (Enter/blur save, Escape cancel).
+- **Copy response**: flat, borderless copy button beside assistant bubbles with `execCommand` fallback.
 - **Auth**: email/password via Supabase, enforced password policy, and server-side rate limiting on auth endpoints (Supabase-managed).
 - **Content Security Policy**: self-only sources with SRI hashing on the production build, Tailwind support in dev.
 
@@ -66,16 +83,29 @@ The function source is versioned at `supabase/functions/research/index.ts`.
 
 ## Validation
 
-- **Typecheck**: `bun run typecheck` — 0 errors
-- **Tests**: `bun run test` — 122 tests passing
-- **Coverage**: `bun run test -- --coverage` — ~60%+ statements, ~79% branches (thresholds: 25/65/60/25)
-- **Lint**: `bun run lint` — 0 errors
-- **Build**: `bun run build` — OK
+- **Typecheck**: `bun run typecheck` - 0 errors
+- **Tests**: `bun run test` - 122 tests passing
+- **Coverage**: `bun run test -- --coverage` - ~60%+ statements, ~79% branches (thresholds: 25/65/60/25)
+- **Lint**: `bun run lint` - 0 errors
+- **Build**: `bun run build` - OK
 
-Security posture and system behavior are specified and verified through the SDD in `openspec/` (spec-driven development):
+## SDD (Spec-Driven Development)
+
+Security posture and system behavior are specified and verified through the SDD in `openspec/`:
 
 - `security-posture`, `authentication`, `voice-input`, `research-pipeline`, `conversation-management`, `supabase-foundation`, `account-management`, `test-framework`
 - Implementation is validated with `bun typecheck`, `bun lint` (eslint-plugin-security), and `bun audit`.
+- Change tracking: `chat-composer-stt-copy-polish` (14 task groups, 40+ tasks completed).
+
+## Acknowledgments
+
+- [native.builder](https://lablab.ai/ai-hackathons/nativebuilder-build-without-limits) - hackathon organizer
+- [lablab.ai](https://lablab.ai) - hackathon platform
+- [Supabase](https://supabase.com) - auth, database, edge functions, realtime
+- [Bright Data](https://brightdata.com) - web data collection (SERP + Web Unlocker)
+- [AI/ML API](https://aimlapi.com) - serverless LLM inferences
+- [Speechmatics](https://speechmatics.com) - real-time speech-to-text
+- [Google DeepMind](https://deepmind.google) - Nano Banana Pro (banner generation)
 
 ## License
 
