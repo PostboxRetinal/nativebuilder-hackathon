@@ -19,6 +19,11 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'text-summary'],
+      exclude: [
+        'src/types/models.ts',
+        'src/lib/database.types.ts',
+        'src/components/chat/index.ts',
+      ],
       thresholds: {
         // Baseline measured from current suite (see follow-up coverage plan).
         // Set just under the real numbers so the gate is green today but fails

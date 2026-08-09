@@ -66,7 +66,7 @@ function ConversationView({ conversationId }: ConversationViewProps): React.Reac
   return (
     <div data-testid="chat-column" className="flex h-full flex-col mx-auto w-full max-w-3xl bg-background text-foreground">
       {/* Top bar */}
-      <header className="bg-surface flex items-center justify-between gap-4 border-b border-border p-4">
+      <header className="bg-surface flex items-center justify-between gap-4 p-4">
         <h1 className="min-w-0 truncate text-base font-semibold tracking-tight">{currentTitle}</h1>
         <div className="flex shrink-0 items-center gap-2">
           {researching && (
@@ -92,7 +92,7 @@ function ConversationView({ conversationId }: ConversationViewProps): React.Reac
       </main>
 
       {/* Input */}
-      <footer className="border-t border-border bg-surface px-4 py-3">
+      <footer className="bg-surface px-4 py-3">
         <div className="w-full space-y-2">
           {/* STT blocks above the composer row so they never stretch it */}
           {voice.state === "done" ? (

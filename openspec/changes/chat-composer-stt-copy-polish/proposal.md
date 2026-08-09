@@ -1,14 +1,17 @@
 ## Why
 
-The voice-to-text flow and the chat read layout had structural UI/UX defects that broke the composed display and fought the brand design. Using STT stretched the bottom bar out of shape because the live preview and the post-finalize editor were rendered inside the 44px composer row; the copy button sat far below the assistant response; user bubbles and their meta were not visually separated from the assistant side; and the finished transcript window could not be dismissed except by re-toggling the mic, which just reopened it.
+The chat UI had structural defects: the composer bar mixed ModelSelector + textarea + voice without a unified row; the sidebar lacked collapsibility and grouped navigation; header/scroll/footer zones were indistinguishable; the model selector had no pricing or categories; and coverage was below 60% in key files.
 
 ## What Changes
 
-- Hoist STT presentation out of the composer row: `VoiceInput` becomes a compact mic + language trigger; the live `TranscriptionPreview` and the post-finalize `VoiceTranscriptEditor` render above the composer bar inside the footer, so they can never stretch the bottom bar.
-- Add a close (X) affordance to the transcript editor that fully dismisses it and returns voice to idle.
-- Move the assistant copy button inline next to the bubble (aligned to the bubble's right edge at the bottom), instead of a full-width trailing row.
-- Align user messages (bubble and "You · Just now" meta) to the right, mirroring the assistant on the left.
-- Introduce `useVoiceComposer` hook to own shared STT + edit state across the new split components.
+- Unify the composer bar into a single 44px row: ModelSelector (with prices) + ChatComposer (textarea) + VoiceInput (mic + language).
+- Add collapsible sidebar with localStorage persistence, grouped blocks (Logo / Collapse+New / Conversations), and hover tooltips.
+- Differentiate zones: header `bg-surface`, message scroll `bg-background`, footer `bg-surface`.
+- Center the chat window at `max-w-3xl`.
+- Add model chip with IN/OUT pricing and categories (Budget / Latest / Reasoning).
+- Add copy toast via sonner.
+- Raise coverage from ~58% to ~60%+ with 30+ new tests across TranscriptionPreview, useVoiceComposer, VoiceInput, AuthContext, ConversationsContext, useMessages, ConversationView.
+- Exclude type-only files from coverage denominator.
 
 ## Capabilities
 
@@ -18,18 +21,25 @@ The voice-to-text flow and the chat read layout had structural UI/UX defects tha
 
 ### Modified Capabilities
 
-- None (visual layout and component structure only; no behavioral requirement of the `chat`, `auth`, or `research` specs changes, so this change declares `skip_specs: true`).
+- None (visual layout, component structure, and test coverage only; no behavioral requirement of the `chat`, `auth`, or `research` specs changes, so this change declares `skip_specs: true`).
 
 ## Impact
 
-- `src/hooks/useVoiceComposer.ts` (new) - owns STT state, language, edited text, submit/re-record/close.
-- `src/components/VoiceInput.tsx` - slimmed to the inline mic + language selector trigger.
-- `src/components/chat/TranscriptionPreview.tsx` (new) - live preview, rendered above the composer row.
-- `src/components/chat/VoiceTranscriptEditor.tsx` (new) - edit + Submit / Re-record / Close card, rendered above the composer row.
-- `src/components/ConversationView.tsx` - orchestrate the STT blocks above the composer bar; wire close to reset.
-- `src/components/chat/ChatMessage.tsx` - copy button inline beside bubble (bottom-right); user meta + bubble aligned right.
-- `src/components/chat/ChatBubble.tsx` - drop `mr-auto` on assistant bubble so copy sits flush against it.
-- Tests: `ConversationView.test.tsx` (done editor + close button), `ChatMessage.test.tsx` (copy behavior unchanged).
+- `src/components/chat/ChatComposer.tsx` — unified composer bar row.
+- `src/components/ModelSelector.tsx` — compact inline select with pricing + categories.
+- `src/components/VoiceInput.tsx` — slim presentational mic + language trigger.
+- `src/components/ConversationView.tsx` — orchestrates STT blocks above composer; centered max-w-3xl.
+- `src/components/ConversationSidebar.tsx` — collapsible rail with grouped blocks + tooltips.
+- `src/components/chat/ChatMessage.tsx` — copy button inline beside bubble; user messages right-aligned.
+- `src/components/chat/ChatBubble.tsx` — assistant bubble no `mr-auto` for copy adjacency.
+- `src/hooks/useVoiceComposer.ts` (new) — owns STT + edit state.
+- `src/components/chat/TranscriptionPreview.tsx` (new) — live preview above composer.
+- `src/components/chat/VoiceTranscriptEditor.tsx` (new) — edit + Submit / Re-record / Close card.
+- `src/lib/uiPrefs.ts` (new) — sidebar collapse persistence.
+- `src/contexts/ConversationsContext.tsx` — tested.
+- `src/hooks/useMessages.ts` — error branches tested.
+- Tests: 30+ new tests across 8 files.
+- `vitest.config.ts` — type-only files excluded from coverage denominator.
 - No dependency or backend changes. UI copy stays English.
 
 ## Non-Goals
@@ -37,3 +47,4 @@ The voice-to-text flow and the chat read layout had structural UI/UX defects tha
 - No change to Speechmatics audio logic or `useSpeechmatics`.
 - No streaming token-by-token rendering.
 - No auth flow or research backend changes.
+- `useSpeechmatics` and `AuthScreen` coverage deferred to post-hackathon.

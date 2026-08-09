@@ -130,4 +130,47 @@ describe('ConversationView centered column', () => {
     await user.click(screen.getByRole('button', { name: 'Close transcript' }))
     expect(reset).toHaveBeenCalled()
   })
+
+  it('calls reRecord when the Re-record button is clicked', async () => {
+    const user = userEvent.setup()
+    const reRecord = vi.fn()
+    useVoiceComposerMock.mockReturnValue({
+      state: 'done',
+      partialText: '',
+      finalText: 'hello world',
+      error: '',
+      language: 'en',
+      setLanguage: vi.fn(),
+      editedText: 'hello world',
+      setEditedText: vi.fn(),
+      startRecording: vi.fn(),
+      stopRecording: vi.fn(),
+      reset: vi.fn(),
+      submitEdit: vi.fn(),
+      reRecord,
+    })
+    renderView()
+    await user.click(screen.getByRole('button', { name: 'Re-record' }))
+    expect(reRecord).toHaveBeenCalled()
+  })
+
+  it('renders the recording preview above the composer when recording', () => {
+    useVoiceComposerMock.mockReturnValue({
+      state: 'recording',
+      partialText: 'live partial',
+      finalText: '',
+      error: '',
+      language: 'en',
+      setLanguage: vi.fn(),
+      editedText: '',
+      setEditedText: vi.fn(),
+      startRecording: vi.fn(),
+      stopRecording: vi.fn(),
+      reset: vi.fn(),
+      submitEdit: vi.fn(),
+      reRecord: vi.fn(),
+    })
+    renderView()
+    expect(screen.getByText(/live partial/i)).toBeInTheDocument()
+  })
 })
