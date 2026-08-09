@@ -56,6 +56,13 @@
 - [x] 9.2 Remove `border-t border-border` from footer in `ConversationView.tsx:95`.
 - [x] 9.3 Verify ConversationView test passes (no border assertions).
 
-## 10. Gate final
+## 9. Gate final
 
-- [x] 10.1 Run `bun run typecheck` (0 errors), `bun run test -- --coverage` (above 25/65/60/25), `bun run lint` (0 errors, 1 legacy warning), `bun run build` (OK).
+- [x] 9.1 Run `bun run typecheck` (0 errors), `bun run test -- --coverage` (above 25/65/60/25), `bun run lint` (0 errors, 1 legacy warning), `bun run build` (OK).
+
+## 10. Editable conversation title
+
+- [x] 10.1 Add `editingTitle` + `draftTitle` state to `ConversationView.tsx`.
+- [x] 10.2 Replace static `<h1>` with click-to-edit input (autoFocus, Enter to save, Escape to cancel, blur to save).
+- [x] 10.3 Wire save to `updateTitle(conversationId, trimmedTitle)` from ConversationsContext.
+- [x] 10.4 Create `ConversationView.title.test.tsx` with 6 tests: initial h1, click-to-edit, Enter-save, Escape-cancel, blur-save, empty-fallback.

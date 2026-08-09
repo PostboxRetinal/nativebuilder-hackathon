@@ -30,6 +30,7 @@ See proposal.md - Why. The composer bar previously mixed ModelSelector + textare
 - **Copy toast:** `toast.success("Copied to clipboard")` on success via sonner. Fallback `execCommand` for non-secure contexts.
 - **Coverage strategy:** `vi.hoisted` for supabase mocks, `mockResolvedValue` for async calls, TestConsumer wrapped in Provider for context tests. Type-only files excluded from denominator via `coverage.exclude` in vitest.config.ts.
 - **No borders between zones:** Header and footer have NO `border-b`/`border-t`. Zones are differentiated solely by `bg-surface` vs `bg-background`. Validated: major dark-theme AI chat UIs (ChatGPT, Claude, Cursor) use flat messages with subtle background differentiation and `dark:border-transparent` — borders create visual noise when surface tokens already separate zones. Follows Tailwind docs pattern (`dark:border-white/10` only when explicit separator is needed; otherwise omit).
+- **Editable title via inline input (chosen over rename modal/prompt).** Pattern matches ChatGPT/Claude inline rename (click-to-edit). Avoids modal/dialog DOM complexity. Local state in ConversationView, persistence via existing `updateTitle` from ConversationsContext. Confirms on Enter/blur, cancels on Escape.
 
 ## Risks / Trade-offs
 

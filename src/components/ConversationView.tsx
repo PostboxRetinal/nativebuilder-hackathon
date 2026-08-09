@@ -20,6 +20,8 @@ function ConversationView({ conversationId }: ConversationViewProps): React.Reac
   const { researching, runResearch } = useResearch();
   const [textInput, setTextInput] = useState("");
   const [model, setModel] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [draftTitle, setDraftTitle] = useState("");
   const isFirstMessage = useRef(true);
 
   const voice = useVoiceComposer((text) => void sendMessage(text));
@@ -67,7 +69,40 @@ function ConversationView({ conversationId }: ConversationViewProps): React.Reac
     <div data-testid="chat-column" className="flex h-full flex-col mx-auto w-full max-w-3xl bg-background text-foreground">
       {/* Top bar */}
       <header className="bg-surface flex items-center justify-between gap-4 p-4">
-        <h1 className="min-w-0 truncate text-base font-semibold tracking-tight">{currentTitle}</h1>
+        <div className="min-w-0 flex-1">
+          {editingTitle ? (
+            <input
+              type="text"
+              value={draftTitle}
+              onChange={(e) => setDraftTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  updateTitle(conversationId, draftTitle.trim() || currentTitle);
+                  setEditingTitle(false);
+                }
+                if (e.key === "Escape") setEditingTitle(false);
+              }}
+              onBlur={() => {
+                updateTitle(conversationId, draftTitle.trim() || currentTitle);
+                setEditingTitle(false);
+              }}
+              autoFocus
+              className="w-full rounded bg-transparent text-base font-semibold tracking-tight outline-none ring-1 ring-border focus:ring-accent"
+              aria-label="Conversation title"
+            />
+          ) : (
+            <h1
+              className="min-w-0 truncate text-base font-semibold tracking-tight cursor-pointer hover:text-accent transition-colors"
+              title="Click to edit title"
+              onClick={() => {
+                setDraftTitle(currentTitle);
+                setEditingTitle(true);
+              }}
+            >
+              {currentTitle}
+            </h1>
+          )}
+        </div>
         <div className="flex shrink-0 items-center gap-2">
           {researching && (
             <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
