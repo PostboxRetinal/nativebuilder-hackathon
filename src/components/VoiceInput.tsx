@@ -76,11 +76,11 @@ export default function VoiceInput({
   const isProcessing = state === "processing";
   const isError = state === "error";
 
-  let label = "";
-  let icon: "mic" | "square" | "spinner" = "mic";
+  let label: string;
+  let icon: "mic" | "square" | "spinner";
   let onClick: (() => void) | undefined;
   let disabled = false;
-  let buttonClass = "";
+  let buttonClass: string;
 
   if (isRecording) {
     label = "Stop recording";
