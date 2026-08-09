@@ -32,7 +32,7 @@ function ChatComposer({ value, onChange, onSubmit, disabled = false }: ChatCompo
         disabled={disabled}
         placeholder="Type a message..."
         rows={1}
-        className="min-h-11 flex-1 resize-y rounded-lg border border-border bg-muted px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 outline-none transition-colors focus:border-accent/60 focus:ring-1 focus:ring-accent/40 disabled:opacity-60"
+        className="min-h-11 min-w-0 flex-1 resize-y rounded-lg border border-border bg-muted px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 outline-none transition-colors focus:border-accent/60 focus:ring-1 focus:ring-accent/40 disabled:opacity-60"
       />
       <button
         type="submit"

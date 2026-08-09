@@ -79,7 +79,7 @@ function ModelSelector({ value, onChange }: ModelSelectorProps): React.ReactNode
         aria-label="Research model"
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value === "" ? null : e.target.value)}
-        className="h-11 rounded-lg border border-border bg-muted px-3 text-xs font-medium text-foreground transition-colors focus:border-accent/60 cursor-pointer"
+        className="h-11 max-w-[9.5rem] rounded-lg border border-border bg-muted px-3 text-xs font-medium text-foreground transition-colors focus:border-accent/60 cursor-pointer"
       >
         <option value="">Default</option>
         {MODEL_CATEGORIES.map((cat) => (

@@ -89,14 +89,16 @@ function ChatMessage({ role, content, sources, isFirstInGroup = false, createdAt
       {isFirstInGroup && createdAt != null && (
         <div
           data-testid="msg-meta"
-          className="mb-1 flex items-center gap-2 text-[11px] uppercase tracking-wide text-muted-foreground"
+          className={`mb-1 flex items-center gap-2 text-[11px] uppercase tracking-wide text-muted-foreground ${
+            role === "user" ? "justify-end" : ""
+          }`}
         >
           <span className="font-medium">{role === "user" ? "You" : "DevVoice"}</span>
           <span aria-hidden="true">·</span>
           <span>{formatRelativeTime(createdAt)}</span>
         </div>
       )}
-      <div className="flex items-start gap-2">
+      <div className={`flex items-end gap-2 ${role === "user" ? "flex-row-reverse" : ""}`}>
         <ChatBubble role={role} content={content} />
         {role === "assistant" && (
           <button
@@ -104,12 +106,15 @@ function ChatMessage({ role, content, sources, isFirstInGroup = false, createdAt
             onClick={handleCopy}
             aria-label={copied ? "Copied" : "Copy response"}
             title="Copy response"
-            className="mt-1 shrink-0 rounded-md border border-border bg-muted p-1.5 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
+            className="mb-0.5 flex shrink-0 items-center gap-1 rounded-md border border-border bg-muted px-2 py-1 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
           >
             {copied ? (
               <span className="text-[10px] font-medium">Copied</span>
             ) : (
-              <CopyIcon className="h-4 w-4" />
+              <>
+                <CopyIcon className="h-4 w-4" />
+                <span className="text-[10px] font-medium"></span>
+              </>
             )}
           </button>
         )}

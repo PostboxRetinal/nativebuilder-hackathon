@@ -2,10 +2,13 @@ import { useCallback, useRef, useState } from "react";
 import { useMessages } from "../hooks/useMessages";
 import { useConversations } from "../contexts/ConversationsContext";
 import { useResearch } from "../hooks/useResearch";
+import { useVoiceComposer } from "../hooks/useVoiceComposer";
 import MessageList from "./MessageList";
 import VoiceInput from "./VoiceInput";
 import ModelSelector, { getActiveModel } from "./ModelSelector";
 import ChatComposer from "./chat/ChatComposer";
+import TranscriptionPreview from "./chat/TranscriptionPreview";
+import VoiceTranscriptEditor from "./chat/VoiceTranscriptEditor";
 
 interface ConversationViewProps {
   conversationId: string;
@@ -18,6 +21,8 @@ function ConversationView({ conversationId }: ConversationViewProps): React.Reac
   const [textInput, setTextInput] = useState("");
   const [model, setModel] = useState<string | null>(null);
   const isFirstMessage = useRef(true);
+
+  const voice = useVoiceComposer((text) => void sendMessage(text));
 
   const conversation = conversations.find((c) => c.id === conversationId);
   const currentTitle = conversation?.title ?? "New Conversation";
@@ -55,10 +60,13 @@ function ConversationView({ conversationId }: ConversationViewProps): React.Reac
     [sendMessage],
   );
 
+  const showPreview =
+    voice.state === "recording" || !!voice.partialText || !!voice.finalText;
+
   return (
-    <div className="flex h-full flex-col bg-background text-foreground">
+    <div data-testid="chat-column" className="flex h-full flex-col mx-auto w-full max-w-3xl bg-background text-foreground">
       {/* Top bar */}
-      <header className="flex items-center justify-between gap-4 border-b border-border p-4">
+      <header className="bg-surface flex items-center justify-between gap-4 border-b border-border p-4">
         <h1 className="min-w-0 truncate text-base font-semibold tracking-tight">{currentTitle}</h1>
         <div className="flex shrink-0 items-center gap-2">
           {researching && (
@@ -84,8 +92,27 @@ function ConversationView({ conversationId }: ConversationViewProps): React.Reac
       </main>
 
       {/* Input */}
-      <footer className="border-t border-border px-4 py-3">
-        <div className="mx-auto max-w-4xl">
+      <footer className="border-t border-border bg-surface px-4 py-3">
+        <div className="w-full space-y-2">
+          {/* STT blocks above the composer row so they never stretch it */}
+          {voice.state === "done" ? (
+            <VoiceTranscriptEditor
+              value={voice.editedText}
+              onChange={voice.setEditedText}
+              onSubmit={voice.submitEdit}
+              onReRecord={voice.reRecord}
+              onClose={voice.reset}
+            />
+          ) : (
+            showPreview && (
+              <TranscriptionPreview
+                partialText={voice.partialText}
+                finalText={voice.finalText}
+                isRecording={voice.state === "recording"}
+              />
+            )
+          )}
+
           <div className="flex items-center gap-2 rounded-xl border border-border bg-surface p-2">
             <ModelSelector value={model} onChange={setModel} />
             <div className="flex min-w-0 flex-1 items-center gap-2">
@@ -95,10 +122,19 @@ function ConversationView({ conversationId }: ConversationViewProps): React.Reac
                 onSubmit={handleSubmit}
                 disabled={researching}
               />
-              <VoiceInput onTranscriptFinal={sendMessage} />
+              <VoiceInput
+                state={voice.state}
+                error={voice.error}
+                language={voice.language}
+                onLanguageChange={voice.setLanguage}
+                onStart={voice.startRecording}
+                onStop={voice.stopRecording}
+                onRetry={voice.startRecording}
+              />
             </div>
           </div>
-          <div className="flex items-center justify-between px-1 pt-1.5">
+
+          <div className="flex items-center justify-between px-1 pt-0.5">
             <span className="truncate pr-3 text-[11px] font-mono text-muted-foreground/70">
               {activeModelLabel}
             </span>

@@ -76,7 +76,7 @@ function AppContent(): React.ReactNode {
         {selectedId != null ? (
           <ConversationView conversationId={selectedId} />
         ) : (
-          <div className="flex flex-1 flex-col items-center justify-center gap-4 bg-background px-6 text-center">
+          <div data-testid="empty-state" className="flex flex-1 flex-col items-center justify-center gap-4 bg-background px-6 text-center mx-auto w-full max-w-3xl">
             <span className="waveform" aria-hidden="true">
               <span className="waveform-bar" /><span className="waveform-bar" />
               <span className="waveform-bar" /><span className="waveform-bar" />
