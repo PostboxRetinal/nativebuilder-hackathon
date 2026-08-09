@@ -14,4 +14,4 @@
 
 - [x] 3.1 Add a Delete account action to the account footer with explicit confirmation dialog
 - [x] 3.2 Wire the action to invoke the `delete-account` Edge Function, then `signOut()`
-- [ ] 3.3 Verify a test user can delete their own account and is returned to the auth screen (blocked on 2.3 being deployed)
+- [x] 3.3 Verify a test user can delete their own account and is returned to the auth screen (blocked on 2.3 being deployed). Confirmed 2026-08-09 by Sebas in the browser: account + conversations deleted, sign-out back to auth screen, success toast shown. Also deployed v2 with explicit CORS preflight (OPTIONS 204) which fixed a browser "Failed to send a request" CORS error blocking the invoke.

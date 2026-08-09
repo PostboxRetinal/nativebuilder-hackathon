@@ -205,17 +205,6 @@ export default function AuthScreen() {
                 {mode === "signup" && password.length > 0 && (
                   <PasswordRequirements value={password} />
                 )}
-                {mode === "signin" && (
-                  <div className="mt-2 text-right">
-                    <button
-                      type="button"
-                      onClick={goForgot}
-                      className="text-xs text-accent hover:underline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring rounded-sm"
-                    >
-                      Forgot password?
-                    </button>
-                  </div>
-                )}
               </div>
             )}
 
@@ -236,33 +225,47 @@ export default function AuthScreen() {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-xs text-muted-foreground mt-6">
-          {mode === "forgot" ? (
-            <>
-              Remember your password?{" "}
-              <button
-                type="button"
-                onClick={switchMode}
-                className="text-accent hover:underline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring rounded-sm"
-              >
-                Sign in
-              </button>
-            </>
-          ) : (
-            <>
-              {mode === "signin"
-                ? "Don't have an account?"
-                : "Already have an account?"}{" "}
-              <button
-                type="button"
-                onClick={switchMode}
-                className="text-accent hover:underline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring rounded-sm"
-              >
-                {mode === "signin" ? "Sign up" : "Sign in"}
-              </button>
-            </>
+        <div className="mt-6 flex flex-col items-center gap-2">
+          <p className="text-center text-xs text-muted-foreground">
+            {mode === "forgot" ? (
+              <>
+                Remember your password?{" "}
+                <button
+                  type="button"
+                  onClick={switchMode}
+                  className="text-accent hover:underline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring rounded-sm"
+                >
+                  Sign in
+                </button>
+              </>
+            ) : (
+              <>
+                {mode === "signin"
+                  ? "Don't have an account?"
+                  : "Already have an account?"}{" "}
+                <button
+                  type="button"
+                  onClick={switchMode}
+                  className="text-accent hover:underline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring rounded-sm"
+                >
+                  {mode === "signin" ? "Sign up" : "Sign in"}
+                </button>
+              </>
+            )}
+          </p>
+          {mode === "signin" && (
+            <button
+              type="button"
+              onClick={goForgot}
+              className="text-xs text-muted-foreground hover:text-accent hover:underline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring rounded-sm"
+            >
+              Forgot password?
+            </button>
           )}
-        </p>
+          <p className="text-[10px] text-muted-foreground/60">
+            v{__APP_VERSION__}
+          </p>
+        </div>
       </div>
     </div>
   );
