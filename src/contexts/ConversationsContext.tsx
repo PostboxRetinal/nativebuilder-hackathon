@@ -156,15 +156,27 @@ export function ConversationsProvider({
 
   const updateTitle = useCallback(
     async (id: string, title: string): Promise<void> => {
+      const previous = conversations.find((c) => c.id === id)?.title;
+
+      setConversations((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, title } : c)),
+      );
+
       const { error } = await supabase
         .from("conversations")
         .update({ title })
         .eq("id", id);
+
       if (error != null) {
         console.error("[useConversations] update title error:", error);
+        if (previous != null) {
+          setConversations((prev) =>
+            prev.map((c) => (c.id === id ? { ...c, title: previous } : c)),
+          );
+        }
       }
     },
-    [],
+    [conversations],
   );
 
   return (

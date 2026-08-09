@@ -1,6 +1,6 @@
 # DevVoice
 
-A voice-powered developer research assistant built for the native.builder hackathon. Speak a question, hear it transcribed, and get a researched answer with clickable source citations: all in a dark, AMOLED-first interface.
+A voice-powered developer research assistant built for the native.builder hackathon. Speak a question, hear it transcribed, and get a researched answer with clickable source citations — all in a dark, AMOLED-first interface.
 
 ## Highlights
 
@@ -13,7 +13,8 @@ A voice-powered developer research assistant built for the native.builder hackat
 
 - **Voice input**: tap-to-record microphone with real-time partial transcripts, editable before submit, and re-record.
 - **Speechmatics STT**: official real-time client; the session JWT is passed via `client.start()` and never embedded in a URL.
-- **Research pipeline**: a Supabase Edge Function runs a search→read→synthesize loop and returns an answer plus clickable source citations; the AI/ML model is selectable per session.
+- **Research pipeline**: a Supabase Edge Function (`supabase/functions/research/index.ts`) runs a search→read→synthesize loop and returns an answer plus clickable source citations; the AI/ML model is selectable per session. All inferences are served serverless via AI/ML API.
+- **Web search integration**: Bright Data SERP API (Google searches) + Web Unlocker (page fetching) power the research agent.
 - **Markdown answers**: assistant responses render as formatted markdown (headings, lists, code, tables, links) with source citations, XSS-safe by default.
 - **Persistent conversations**: auth-gated chat history with sequential ordering and real-time updates.
 - **Auth**: email/password via Supabase, enforced password policy, and server-side rate limiting on auth endpoints (Supabase-managed).
@@ -33,11 +34,14 @@ flowchart LR
   U -->|sign in| Auth[Supabase Auth]
 ```
 
+The Edge Function source lives in `supabase/functions/research/index.ts` and is deployed via `supabase functions deploy research`.
+
 ## Tech Stack
 
 | Layer | Technology |
 | ----- | ---------- |
-| UI | React, TypeScript, Vite, Tailwind CSS |
+| UI | React 19, TypeScript 7 (via @typescript/native), Vite 8, Tailwind CSS 3 |
+| Testing | Vitest 4 |
 | Auth & data | Supabase (Auth, Postgres, Realtime, Edge Functions) |
 | Speech-to-text | @speechmatics/real-time-client |
 | Research | Bright Data (SERP + Web Unlocker), AI/ML API |
@@ -50,9 +54,23 @@ bun install
 bun dev
 ```
 
-Requirements: a Supabase project with the `speechmatics-token` and `research` Edge Functions and their secrets, plus a valid Bright Data and AI/ML API key. Database types are generated from the Supabase schema in `src/lib/database.types.ts`.
+Requirements: a Supabase project with the `research` Edge Function deployed and its secrets (`AIML_API_KEY`, `BRIGHTDATA_API_KEY`), plus a valid Bright Data and AI/ML API key. Database types are generated from the Supabase schema in `src/lib/database.types.ts`.
+
+### Deploying the Edge Function
+
+```bash
+supabase functions deploy research
+```
+
+The function source is versioned at `supabase/functions/research/index.ts`.
 
 ## Validation
+
+- **Typecheck**: `bun run typecheck` — 0 errors
+- **Tests**: `bun run test` — 122 tests passing
+- **Coverage**: `bun run test -- --coverage` — ~60%+ statements, ~79% branches (thresholds: 25/65/60/25)
+- **Lint**: `bun run lint` — 0 errors
+- **Build**: `bun run build` — OK
 
 Security posture and system behavior are specified and verified through the SDD in `openspec/` (spec-driven development):
 

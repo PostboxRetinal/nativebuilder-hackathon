@@ -23,7 +23,7 @@ describe('MessageList', () => {
 
   it('renders empty state when there are no messages', () => {
     render(<MessageList messages={[]} loading={false} />)
-    expect(screen.getByText('No messages yet')).toBeInTheDocument()
+    expect(screen.getByText(/No messages yet/)).toBeInTheDocument()
   })
 
   it('renders user and assistant message content', () => {
@@ -119,12 +119,12 @@ describe('MessageList', () => {
     expect(link).toHaveAttribute('rel', 'noopener noreferrer')
   })
 
-  it('renders user content as plain text, not markdown', () => {
+  it('renders user content as markdown (not raw markers)', () => {
     const messages: Message[] = [
       makeMessage({ id: '1', role: 'user', content: '**bold**' }),
     ]
     render(<MessageList messages={messages} loading={false} />)
-    expect(screen.getByText('**bold**')).toBeInTheDocument()
-    expect(screen.queryByText('bold')).not.toBeInTheDocument()
+    expect(screen.queryByText('**bold**')).not.toBeInTheDocument()
+    expect(screen.getByText('bold')).toBeInTheDocument()
   })
 })

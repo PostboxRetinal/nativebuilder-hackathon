@@ -16,5 +16,23 @@ export default defineConfig({
     setupFiles: './vitest.setup.ts',
     globals: true,
     exclude: ['tests/e2e/**', 'node_modules/**', 'dist/**'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'text-summary'],
+      exclude: [
+        'src/types/models.ts',
+        'src/lib/database.types.ts',
+        'src/components/chat/index.ts',
+      ],
+      thresholds: {
+        // Baseline measured from current suite (see follow-up coverage plan).
+        // Set just under the real numbers so the gate is green today but fails
+        // on any regression. Raise as new component tests land.
+        statements: 25,
+        branches: 65,
+        functions: 60,
+        lines: 25,
+      },
+    },
   },
 })

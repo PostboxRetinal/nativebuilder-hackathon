@@ -84,4 +84,47 @@ describe('useMessages order_index serialization', () => {
 
     expect(db.rows.map((r) => r.order_index)).toEqual([1, 2])
   })
+
+  it('does not insert when last-message read fails', async () => {
+    const db = makeDb()
+    fromMock.mockImplementation(() => {
+      const q = db.builder()
+      // Force maybeSingle to return an error
+      ;(q as any).maybeSingle = vi.fn(async () => ({ data: null, error: { message: 'read fail' } }))
+      return q
+    })
+
+    const { result: hook } = renderHook(() => useMessages('conv-1'))
+
+    await act(async () => {
+      await hook.current.addMessage('user', 'hello')
+    })
+
+    expect(db.rows).toHaveLength(0)
+  })
+
+  it('does not append to state when insert fails', async () => {
+    const db = makeDb()
+    fromMock.mockImplementation(() => {
+      const q = db.builder()
+      // Force insert to return an error
+      ;(q as any).insert = vi.fn(() => {
+        const inner = {
+          select: vi.fn(() => inner),
+          single: vi.fn(async () => ({ data: null, error: { message: 'insert fail' } })),
+        }
+        return inner
+      })
+      return q
+    })
+
+    const { result: hook } = renderHook(() => useMessages('conv-1'))
+
+    await act(async () => {
+      await hook.current.addMessage('user', 'hello')
+    })
+
+    expect(db.rows).toHaveLength(0)
+    expect(hook.current.messages).toHaveLength(0)
+  })
 })

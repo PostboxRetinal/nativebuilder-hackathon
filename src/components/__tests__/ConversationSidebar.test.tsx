@@ -16,12 +16,17 @@ vi.mock('../../contexts/AuthContext', () => ({
 const useConversationsMock = useConversations as ReturnType<typeof vi.fn>
 const useAuthMock = useAuth as ReturnType<typeof vi.fn>
 
-function renderSidebar() {
+function renderSidebar(
+  overrides: Partial<React.ComponentProps<typeof ConversationSidebar>> = {},
+) {
   return render(
     <ConversationSidebar
       selectedConversationId={null}
       onSelectConversation={() => {}}
       onCreateNew={() => {}}
+      collapsed={false}
+      onToggle={() => {}}
+      {...overrides}
     />,
   )
 }
@@ -90,5 +95,39 @@ describe('ConversationSidebar delete account', () => {
     await user.click(screen.getByTestId('confirm-delete-account'))
 
     expect(await screen.findByText('Delete failed')).toBeInTheDocument()
+  })
+})
+
+describe('ConversationSidebar collapse', () => {
+  const signOut = vi.fn()
+  const deleteAccount = vi.fn()
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    useConversationsMock.mockReturnValue({
+      conversations: [],
+      loading: false,
+      deleteConversation: vi.fn(),
+    })
+    useAuthMock.mockReturnValue({
+      user: { email: 'sebas@example.com' },
+      signOut,
+      deleteAccount,
+    })
+  })
+
+  it('shows a toggle button with aria-expanded true when expanded', () => {
+    const onToggle = vi.fn()
+    renderSidebar({ collapsed: false, onToggle })
+    expect(
+      screen.getByRole('button', { name: /collapse sidebar/i }),
+    ).toHaveAttribute('aria-expanded', 'true')
+  })
+
+  it('reflects collapsed state in aria-expanded and label', () => {
+    renderSidebar({ collapsed: true })
+    expect(
+      screen.getByRole('button', { name: /expand sidebar/i }),
+    ).toHaveAttribute('aria-expanded', 'false')
   })
 })
