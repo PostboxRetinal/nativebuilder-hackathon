@@ -5,6 +5,7 @@ import { useResearch } from "../hooks/useResearch";
 import MessageList from "./MessageList";
 import VoiceInput from "./VoiceInput";
 import ModelSelector from "./ModelSelector";
+import ChatComposer from "./chat/ChatComposer";
 
 interface ConversationViewProps {
   conversationId: string;
@@ -43,13 +44,11 @@ function ConversationView({ conversationId }: ConversationViewProps): React.Reac
   );
 
   const handleSubmit = useCallback(
-    (e: React.FormEvent) => {
-      e.preventDefault();
-      if (textInput.trim().length === 0) return;
-      sendMessage(textInput);
+    (text: string) => {
+      sendMessage(text);
       setTextInput("");
     },
-    [textInput, sendMessage],
+    [sendMessage],
   );
 
   return (
@@ -74,22 +73,11 @@ function ConversationView({ conversationId }: ConversationViewProps): React.Reac
       {/* Input */}
       <footer className="border-t border-zinc-800 p-4">
         <div className="mx-auto flex max-w-4xl items-center gap-4">
-          <form onSubmit={handleSubmit} className="flex flex-1 gap-2">
-            <input
-              key="message-input"
-              type="text"
-              value={textInput}
-              onChange={(e) => setTextInput(e.target.value)}
-              placeholder="Type a message..."
-              className="flex-1 rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-2 outline-none transition-colors focus:border-zinc-600"
-            />
-            <button
-              type="submit"
-              className="rounded-lg bg-white px-4 py-2 font-medium text-black transition-colors hover:bg-zinc-200"
-            >
-              Send
-            </button>
-          </form>
+          <ChatComposer
+            value={textInput}
+            onChange={setTextInput}
+            onSubmit={handleSubmit}
+          />
           <VoiceInput onTranscriptFinal={sendMessage} />
         </div>
       </footer>

@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { toast } from "sonner";
 import { isPasswordValid } from "../lib/password";
 import PasswordRequirements from "./PasswordRequirements";
 
@@ -12,12 +13,10 @@ export default function AuthScreen() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
-    setSuccessMessage("");
 
     if (!email.trim()) {
       setError("Please enter your email.");
@@ -28,9 +27,9 @@ export default function AuthScreen() {
       setSubmitting(true);
       const result = await requestPasswordReset(email);
       if (result.error) {
-        setError(result.error);
+        toast.error(result.error);
       } else {
-        setSuccessMessage(
+        toast.success(
           "If an account exists for that email, a password reset link has been sent. Check your inbox.",
         );
       }
@@ -62,14 +61,14 @@ export default function AuthScreen() {
     if (mode === "signin") {
       const result = await signIn(email, password);
       if (result.error) {
-        setError(result.error);
+        toast.error(result.error);
       }
     } else {
       const result = await signUp(email, password);
       if (result.error) {
         setError(result.error);
       } else {
-        setSuccessMessage(
+        toast.success(
           "Account created! Check your email for a confirmation link. You can sign in once confirmed.",
         );
       }
@@ -85,13 +84,11 @@ export default function AuthScreen() {
       setMode(mode === "signin" ? "signup" : "signin");
     }
     setError("");
-    setSuccessMessage("");
   };
 
   const goForgot = () => {
     setMode("forgot");
     setError("");
-    setSuccessMessage("");
   };
 
   return (
@@ -134,17 +131,6 @@ export default function AuthScreen() {
               >
                 Sign Up
               </button>
-            </div>
-          )}
-
-          {/* Success message (sign up) */}
-          {successMessage && (
-            <div
-              className="mb-4 p-3 rounded-lg bg-accent/10 border border-accent/30 text-sm text-accent"
-              role="status"
-              aria-live="polite"
-            >
-              {successMessage}
             </div>
           )}
 
@@ -277,12 +263,10 @@ export function SetNewPassword() {
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
-    setSuccessMessage("");
 
     if (!isPasswordValid(password)) {
       setError(
@@ -299,11 +283,9 @@ export function SetNewPassword() {
     setSubmitting(true);
     const result = await updatePassword(password);
     if (result.error) {
-      setError(result.error);
+      toast.error(result.error);
     } else {
-      setSuccessMessage(
-        "Password updated. You can now sign in with your new password.",
-      );
+      toast.success("Password updated. You can now sign in with your new password.");
     }
     setSubmitting(false);
   };
@@ -321,26 +303,17 @@ export function SetNewPassword() {
         </div>
 
         <div className="bg-background border border-border rounded-xl p-6 shadow-lg">
-          {successMessage ? (
+          {error && (
             <div
-              className="p-3 rounded-lg bg-accent/10 border border-accent/30 text-sm text-accent"
-              role="status"
+              className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm text-destructive"
+              role="alert"
+              aria-live="assertive"
             >
-              {successMessage}
+              {error}
             </div>
-          ) : (
-            <>
-              {error && (
-                <div
-                  className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm text-destructive"
-                  role="alert"
-                  aria-live="assertive"
-                >
-                  {error}
-                </div>
-              )}
+          )}
 
-              <form onSubmit={handleSubmit} noValidate>
+          <form onSubmit={handleSubmit} noValidate>
                 <div className="mb-4">
                   <label
                     htmlFor="new-password"
@@ -388,8 +361,6 @@ export function SetNewPassword() {
                   {submitting ? "Please wait…" : "Update password"}
                 </button>
               </form>
-            </>
-          )}
         </div>
       </div>
     </div>
