@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import type { Message, Source } from "../../types/models";
 import ChatBubble from "./ChatBubble";
 import SourceCitation from "../SourceCitation";
@@ -74,6 +75,7 @@ function ChatMessage({ role, content, sources, isFirstInGroup = false, createdAt
         document.body.removeChild(ta);
       }
       setCopied(true);
+      toast.success("Copied to clipboard");
       setTimeout(() => setCopied(false), 1500);
     } catch {
       setCopied(false);

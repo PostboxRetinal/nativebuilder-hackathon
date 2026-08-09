@@ -92,10 +92,23 @@ export default function AuthScreen() {
   };
 
   return (
-    <div className="min-h-screen bg-dotgrid-glow flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo / Branding */}
         <div className="text-center mb-8">
+          <div
+            className="mb-3 flex justify-center motion-reduce:hidden"
+            role="presentation"
+            aria-hidden="true"
+          >
+            <span className="waveform">
+              <span className="waveform-bar" />
+              <span className="waveform-bar" />
+              <span className="waveform-bar" />
+              <span className="waveform-bar" />
+              <span className="waveform-bar" />
+            </span>
+          </div>
           <h1 className="text-2xl font-semibold text-foreground tracking-tight">
             DevVoice
           </h1>
@@ -114,7 +127,7 @@ export default function AuthScreen() {
                 onClick={() => setMode("signin")}
                 className={`flex-1 pb-3 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded-sm ${
                   mode === "signin"
-                    ? "text-foreground border-b-2 border-primary"
+                    ? "text-foreground border-b-2 border-accent"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -125,7 +138,7 @@ export default function AuthScreen() {
                 onClick={() => setMode("signup")}
                 className={`flex-1 pb-3 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded-sm ${
                   mode === "signup"
-                    ? "text-foreground border-b-2 border-primary"
+                    ? "text-foreground border-b-2 border-accent"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -163,7 +176,7 @@ export default function AuthScreen() {
                 onChange={(e) => setEmail(e.target.value)}
                 aria-describedby={error ? "auth-error" : undefined}
                 aria-invalid={!!error}
-                className="w-full px-3 py-2.5 rounded-lg bg-muted border border-border text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring transition-colors text-sm"
+                className="w-full h-11 px-3 rounded-lg bg-muted border border-border text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring transition-colors text-sm"
               />
             </div>
 
@@ -186,7 +199,7 @@ export default function AuthScreen() {
                   onChange={(e) => setPassword(e.target.value)}
                   aria-describedby={error ? "auth-error" : undefined}
                   aria-invalid={!!error}
-                  className="w-full px-3 py-2.5 rounded-lg bg-muted border border-border text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring transition-colors text-sm"
+                  className="w-full h-11 px-3 rounded-lg bg-muted border border-border text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring transition-colors text-sm"
                 />
                 {mode === "signup" && password.length > 0 && (
                   <PasswordRequirements value={password} />
@@ -197,7 +210,7 @@ export default function AuthScreen() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-2.5 px-4 rounded-lg bg-primary text-on-primary font-medium text-sm transition-all duration-150 hover:opacity-90 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              className="w-full py-2.5 px-4 rounded-lg bg-accent text-on-accent font-medium text-sm transition-all duration-150 hover:opacity-90 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >
               {submitting
                 ? "Please wait…"
@@ -291,9 +304,22 @@ export function SetNewPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-dotgrid-glow flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
+          <div
+            className="mb-3 flex justify-center motion-reduce:hidden"
+            role="presentation"
+            aria-hidden="true"
+          >
+            <span className="waveform">
+              <span className="waveform-bar" />
+              <span className="waveform-bar" />
+              <span className="waveform-bar" />
+              <span className="waveform-bar" />
+              <span className="waveform-bar" />
+            </span>
+          </div>
           <h1 className="text-2xl font-semibold text-foreground tracking-tight">
             DevVoice
           </h1>
@@ -329,7 +355,7 @@ export function SetNewPassword() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     aria-invalid={!!error}
-                    className="w-full px-3 py-2.5 rounded-lg bg-muted border border-border text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring transition-colors text-sm"
+                    className="w-full h-11 px-3 rounded-lg bg-muted border border-border text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring transition-colors text-sm"
                   />
                   {password.length > 0 && <PasswordRequirements value={password} />}
                 </div>
@@ -349,14 +375,14 @@ export function SetNewPassword() {
                     value={confirm}
                     onChange={(e) => setConfirm(e.target.value)}
                     aria-invalid={!!error}
-                    className="w-full px-3 py-2.5 rounded-lg bg-muted border border-border text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring transition-colors text-sm"
+                    className="w-full h-11 px-3 rounded-lg bg-muted border border-border text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring transition-colors text-sm"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full py-2.5 px-4 rounded-lg bg-primary text-on-primary font-medium text-sm transition-all duration-150 hover:opacity-90 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                  className="w-full py-2.5 px-4 rounded-lg bg-accent text-on-accent font-medium text-sm transition-all duration-150 hover:opacity-90 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                 >
                   {submitting ? "Please wait…" : "Update password"}
                 </button>

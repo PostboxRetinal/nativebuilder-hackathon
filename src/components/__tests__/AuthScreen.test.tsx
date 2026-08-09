@@ -35,6 +35,14 @@ describe("AuthScreen", () => {
   });
 
   describe("sign in", () => {
+    it("uses the green accent submit button", () => {
+      const { container } = render(<AuthScreen />);
+      const submit = container.querySelector('button[type="submit"]');
+      expect(submit).not.toBeNull();
+      expect(submit!.className).toMatch(/bg-accent/);
+      expect(submit!.className).not.toMatch(/bg-primary/);
+    });
+
     it("shows a toast error on invalid credentials", async () => {
       mockAuth({
         signIn: vi.fn().mockResolvedValue({ error: "Invalid login credentials" }),

@@ -9,6 +9,11 @@ const sources: Source[] = [
   { title: "Beta", url: "https://beta.example.com" },
 ];
 
+const toastSuccess = vi.fn();
+vi.mock("sonner", () => ({
+  toast: { success: (...args: unknown[]) => toastSuccess(...args) },
+}));
+
 describe("ChatMessage", () => {
   it("renders source citations for assistant messages with sources", () => {
     render(<ChatMessage role="assistant" content="body" sources={sources} />);
@@ -119,6 +124,16 @@ describe("ChatMessage", () => {
     it("does not render a copy button on user messages", () => {
       render(<ChatMessage role="user" content="hi" />);
       expect(screen.queryByRole("button", { name: /copy/i })).not.toBeInTheDocument();
+    });
+
+    it("toasts success when copying assistant content", async () => {
+      const user = userEvent.setup();
+      const writeText = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+
+      render(<ChatMessage role="assistant" content="toast me" sources={[]} />);
+      await user.click(screen.getByRole("button", { name: /copy/i }));
+      expect(toastSuccess).toHaveBeenCalledWith(expect.stringMatching(/copied/i));
     });
   });
 });
