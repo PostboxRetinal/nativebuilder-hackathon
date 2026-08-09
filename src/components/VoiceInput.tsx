@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSpeechmatics } from "../hooks/useSpeechmatics";
 import type { UseSpeechmaticsReturn } from "../hooks/useSpeechmatics";
-import type { SpeechLanguage } from "../hooks/useSpeechmatics";
 
 // ── Inline SVG icons (avoids pulling in all of lucide-react → OOM in sandbox) ──
 
@@ -57,7 +56,6 @@ export interface VoiceInputProps {
 }
 
 export default function VoiceInput({ onTranscriptFinal }: VoiceInputProps) {
-  const [language, setLanguage] = useState<SpeechLanguage>("en");
   const {
     state,
     partialText,
@@ -66,7 +64,7 @@ export default function VoiceInput({ onTranscriptFinal }: VoiceInputProps) {
     startRecording,
     stopRecording,
     reset,
-  } = useSpeechmatics(language);
+  } = useSpeechmatics();
 
   const [editedText, setEditedText] = useState("");
 
@@ -102,7 +100,7 @@ export default function VoiceInput({ onTranscriptFinal }: VoiceInputProps) {
           value={editedText}
           onChange={(e) => setEditedText(e.target.value)}
           rows={3}
-          className="w-full px-4 py-3 rounded-lg bg-muted border border-border text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring transition-colors text-sm resize-none"
+          className="w-full px-4 py-3 rounded-lg bg-muted border border-border text-foreground placeholder:text-muted/60 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring transition-colors text-sm resize-none"
           placeholder="Your transcription will appear here…"
         />
         <div className="flex gap-3">
@@ -128,7 +126,7 @@ export default function VoiceInput({ onTranscriptFinal }: VoiceInputProps) {
 
   // ---- Main recording UI ----
   return (
-    <div className="flex flex-col items-stretch gap-3">
+    <div className="w-full max-w-2xl mx-auto flex flex-col items-center gap-4">
       {/* Transcription Preview */}
       <TranscriptionPreview
         partialText={partialText}
@@ -136,48 +134,15 @@ export default function VoiceInput({ onTranscriptFinal }: VoiceInputProps) {
         isRecording={state === "recording"}
       />
 
-      {/* Record button left, Language selector right of it */}
-      <div className="flex items-center justify-between gap-3">
-        <RecordButton
-          state={state}
-          error={error}
-          onStart={startRecording}
-          onStop={stopRecording}
-          onRetry={startRecording}
-        />
-        <LanguageToggle language={language} onChange={setLanguage} />
-      </div>
+      {/* Record Button */}
+      <RecordButton
+        state={state}
+        error={error}
+        onStart={startRecording}
+        onStop={stopRecording}
+        onRetry={startRecording}
+      />
     </div>
-  );
-}
-
-function LanguageToggle({
-  language,
-  onChange,
-}: {
-  language: SpeechLanguage;
-  onChange: (l: SpeechLanguage) => void;
-}) {
-  return (
-    <label className="flex items-center gap-2 text-xs text-muted-foreground">
-      <span className="whitespace-nowrap">Language</span>
-      <select
-        aria-label="Transcription language"
-        value={language}
-        onChange={(e) => onChange(e.target.value as SpeechLanguage)}
-        className="rounded-md border border-border bg-muted px-2 py-1 text-xs font-medium text-foreground focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring cursor-pointer"
-      >
-        <option value="en">English</option>
-        <option value="es">Español</option>
-        <option value="es-bilingual">Español + English</option>
-        <option value="pt">Português</option>
-        <option value="fr">Français</option>
-        <option value="de">Deutsch</option>
-        <option value="it">Italiano</option>
-        <option value="ja">日本語</option>
-        <option value="cmn">普通话</option>
-      </select>
-    </label>
   );
 }
 
@@ -212,7 +177,7 @@ function TranscriptionPreview({
         </span>
       )}
       {!finalText && !partialText && isRecording && (
-        <span className="text-muted-foreground italic">Listening…</span>
+        <span className="text-muted italic">Listening…</span>
       )}
     </div>
   );
@@ -251,7 +216,7 @@ function RecordButton({
     label = "Finalizing…";
     icon = "spinner";
     disabled = true;
-    buttonClass = "bg-muted text-muted-foreground/60 cursor-not-allowed";
+    buttonClass = "bg-muted text-muted/60 cursor-not-allowed";
   } else if (isError) {
     label = error || "Tap to retry";
     icon = "mic";
@@ -286,7 +251,7 @@ function RecordButton({
       </button>
       <span
         className={`text-xs font-medium transition-colors duration-200 ${
-          isError ? "text-destructive" : "text-muted-foreground"
+          isError ? "text-destructive" : "text-muted"
         }`}
       >
         {isError ? error : isProcessing ? "Finalizing…" : isRecording ? "Listening…" : "Tap to record"}

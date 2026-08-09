@@ -1,50 +1,28 @@
 {
-  "name": "devvoice",
+  "name": "my-app",
   "private": true,
-  "version": "0.3.4",
+  "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint .",
-    "test": "vitest run",
-    "e2e": "playwright test",
+    "dev": "NODE_OPTIONS='--max-old-space-size=128' vite",
+    "build": "NODE_OPTIONS='--max-old-space-size=100' vite build",
     "preview": "vite preview"
   },
   "dependencies": {
-    "@speechmatics/real-time-client": "^8.5.1",
     "@supabase/supabase-js": "^2.112.0",
     "autoprefixer": "^10.5.4",
-    "csp-toolkit": "^1.5.0",
     "postcss": "^8.5.25",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-markdown": "^10.1.0",
-    "remark-gfm": "^4.0.1",
-    "sonner": "^2.0.7",
-    "tailwindcss": "^3.4.19",
-    "vite-plugin-csp-guard": "^4.0.1"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwindcss": "^3.4.19"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.5",
-    "@playwright/test": "^1.62.1",
-    "@testing-library/jest-dom": "^7.0.0",
-    "@testing-library/react": "^16.3.2",
-    "@testing-library/user-event": "^14.6.3",
     "@types/node": "^24.10.1",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "@typescript-eslint/eslint-plugin": "^8.46.3",
-    "@typescript-eslint/parser": "^8.46.3",
-    "@typescript/native": "npm:typescript@^7.0.2",
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^5.1.1",
-    "eslint": "^10.8.0",
-    "eslint-plugin-security": "^4.0.1",
     "globals": "^16.5.0",
-    "jsdom": "^30.0.1",
-    "typescript": "^6.0.2",
-    "vite": "^7.2.4",
-    "vitest": "^3.2"
+    "typescript": "~5.9.3",
+    "vite": "^7.2.4"
   }
 }

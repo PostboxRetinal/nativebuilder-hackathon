@@ -6,7 +6,6 @@ import {
   type ReactNode,
 } from "react";
 import { supabase } from "../lib/supabase";
-import { toast } from "sonner";
 import type { User, Session } from "@supabase/supabase-js";
 
 interface AuthContextValue {
@@ -16,15 +15,6 @@ interface AuthContextValue {
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
   signUp: (email: string, password: string) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
-  // Permanently delete the current account and its data, then sign out.
-  deleteAccount: () => Promise<{ error?: string }>;
-  isRecovering: boolean;
-  requestPasswordReset: (
-    email: string,
-  ) => Promise<{ error?: string }>;
-  updatePassword: (
-    password: string,
-  ) => Promise<{ error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -33,7 +23,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isRecovering, setIsRecovering] = useState(false);
 
   useEffect(() => {
     // Get initial session
@@ -46,13 +35,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
-      if (event === "PASSWORD_RECOVERY") {
-        setIsRecovering(true);
-      }
     });
 
     return () => subscription.unsubscribe();
@@ -83,46 +69,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
   };
 
-  const deleteAccount = async (): Promise<{ error?: string }> => {
-    const { error } = await supabase.functions.invoke("delete-account", {
-      body: {},
-    });
-    if (error != null) return { error: error.message };
-    toast.success("Your account and all conversations were deleted.");
-    await supabase.auth.signOut();
-    return {};
-  };
-
-  const requestPasswordReset = async (email: string) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin,
-    });
-    if (error) return { error: error.message };
-    return {};
-  };
-
-  const updatePassword = async (password: string) => {
-    const { error } = await supabase.auth.updateUser({ password });
-    if (error) return { error: error.message };
-    setIsRecovering(false);
-    return {};
-  };
-
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        session,
-        loading,
-        signIn,
-        signUp,
-        signOut,
-        deleteAccount,
-        isRecovering,
-        requestPasswordReset,
-        updatePassword,
-      }}
-    >
+    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );

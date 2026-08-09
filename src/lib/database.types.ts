@@ -20,21 +20,18 @@ export type Database = {
           id: string
           title: string
           user_id: string
-          updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           id?: string
           title?: string
           user_id: string
-          updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           id?: string
           title?: string
           user_id?: string
-          updated_at?: string | null
         }
         Relationships: []
       }
@@ -46,7 +43,6 @@ export type Database = {
           id: string
           role: string
           sources: Json | null
-          order_index: number
         }
         Insert: {
           content: string
@@ -55,7 +51,6 @@ export type Database = {
           id?: string
           role: string
           sources?: Json | null
-          order_index?: number
         }
         Update: {
           content?: string
@@ -64,7 +59,6 @@ export type Database = {
           id?: string
           role?: string
           sources?: Json | null
-          order_index?: number
         }
         Relationships: [
           {

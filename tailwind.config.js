@@ -7,7 +7,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['system-ui', '-apple-system', 'sans-serif'],
+        sans: ['"Inter"', 'ui-sans-serif', 'system-ui', '-apple-system', 'sans-serif'],
       },
       colors: {
         primary: '#0F172A',
@@ -17,7 +17,6 @@ export default {
         background: '#020617',
         foreground: '#F8FAFC',
         muted: '#1A1E2F',
-        'muted-foreground': '#94A3B8',
         border: '#334155',
         destructive: '#EF4444',
         ring: '#0F172A',

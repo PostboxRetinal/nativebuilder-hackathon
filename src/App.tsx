@@ -1,41 +1,22 @@
-import { useCallback, useState } from "react";
-import { Toaster } from "sonner";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
-import { ConversationsProvider, useConversations } from "./contexts/ConversationsContext";
-import AuthScreen, { SetNewPassword } from "./components/AuthScreen";
-import ConversationSidebar from "./components/ConversationSidebar";
-import ConversationView from "./components/ConversationView";
+import AuthScreen from "./components/AuthScreen";
 
 export default function App() {
   return (
     <AuthProvider>
-      <ConversationsProvider>
-        <AppContent />
-      </ConversationsProvider>
-      {/* Mounted once at the app root so toasts survive the signOut that
-          follows account deletion (the sidebar that triggers it unmounts). */}
-      <Toaster theme="dark" position="top-center" richColors />
+      <AppContent />
     </AuthProvider>
   );
 }
 
-function AppContent(): React.ReactNode {
-  const { user, loading, isRecovering } = useAuth();
-  const { createConversation } = useConversations();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-
-  const handleCreateNew = useCallback(async () => {
-    const id = await createConversation();
-    if (id != null) {
-      setSelectedId(id);
-    }
-  }, [createConversation]);
+function AppContent() {
+  const { user, loading, signOut } = useAuth();
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-black">
+      <div className="min-h-screen bg-dotgrid-glow flex items-center justify-center">
         <div
-          className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-700 border-t-white"
+          className="w-8 h-8 border-2 border-muted border-t-primary rounded-full animate-spin"
           role="status"
           aria-label="Loading"
         />
@@ -43,29 +24,25 @@ function AppContent(): React.ReactNode {
     );
   }
 
-  if (isRecovering) {
-    return <SetNewPassword />;
-  }
-
-  if (user == null) {
+  if (!user) {
     return <AuthScreen />;
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-black">
-      <ConversationSidebar
-        selectedConversationId={selectedId}
-        onSelectConversation={setSelectedId}
-        onCreateNew={handleCreateNew}
-      />
-      <div className="flex flex-1 flex-col">
-        {selectedId != null ? (
-          <ConversationView conversationId={selectedId} />
-        ) : (
-          <div className="flex flex-1 items-center justify-center text-zinc-500">
-            Select a conversation or start a new one
-          </div>
-        )}
+    <div className="min-h-screen bg-dotgrid-glow flex items-center justify-center p-4">
+      <div className="text-center">
+        <h1 className="text-2xl font-semibold text-foreground mb-2">
+          Welcome, {user.email}
+        </h1>
+        <p className="text-sm text-muted mb-6">
+          You're signed in. The conversation UI is coming next.
+        </p>
+        <button
+          onClick={signOut}
+          className="py-2 px-5 rounded-lg bg-muted border border-border text-foreground text-sm font-medium transition-all duration-150 hover:bg-border active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        >
+          Sign Out
+        </button>
       </div>
     </div>
   );
