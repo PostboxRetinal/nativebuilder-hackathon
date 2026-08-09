@@ -148,14 +148,63 @@ describe("ConversationsContext", () => {
     });
   });
 
-  it("updateTitle calls supabase update", async () => {
+  it("updateTitle updates local state immediately (optimistic)", async () => {
     const mockUpdateEq = vi.fn(() => Promise.resolve({ error: null }));
     mockFrom.mockImplementation((table: string) => {
       if (table === "conversations") {
         return {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
-              order: vi.fn(() => Promise.resolve({ data: [], error: null })),
+              order: vi.fn(() =>
+                Promise.resolve({
+                  data: [
+                    { id: "c1", title: "Old Title", created_at: "2026-01-01" },
+                  ],
+                  error: null,
+                }),
+              ),
+            })),
+          })),
+          update: vi.fn(() => ({
+            eq: mockUpdateEq,
+          })),
+        };
+      }
+      return {};
+    });
+
+    render(
+      <ConversationsProvider>
+        <TestConsumer />
+      </ConversationsProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("ready")).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      screen.getByText("update").click();
+    });
+
+    expect(mockUpdateEq).toHaveBeenCalled();
+  });
+
+  it("updateTitle rolls back local state when supabase update fails", async () => {
+    const mockUpdateEq = vi.fn(() => Promise.resolve({ error: { msg: "fail" } }));
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "conversations") {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              order: vi.fn(() =>
+                Promise.resolve({
+                  data: [
+                    { id: "c1", title: "Original", created_at: "2026-01-01" },
+                  ],
+                  error: null,
+                }),
+              ),
             })),
           })),
           update: vi.fn(() => ({
