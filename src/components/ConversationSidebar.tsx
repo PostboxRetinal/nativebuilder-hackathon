@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { useConversations } from "../hooks/useConversations";
+import { useConversations } from "../contexts/ConversationsContext";
 import { useAuth } from "../contexts/AuthContext";
 
 interface ConversationSidebarProps {

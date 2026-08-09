@@ -2,10 +2,10 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import ConversationSidebar from '../ConversationSidebar'
-import { useConversations } from '../../hooks/useConversations'
+import { useConversations } from '../../contexts/ConversationsContext'
 import { useAuth } from '../../contexts/AuthContext'
 
-vi.mock('../../hooks/useConversations', () => ({
+vi.mock('../../contexts/ConversationsContext', () => ({
   useConversations: vi.fn(),
 }))
 

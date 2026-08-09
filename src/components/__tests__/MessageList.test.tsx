@@ -87,4 +87,44 @@ describe('MessageList', () => {
     expect(screen.queryByText('NoUrl')).not.toBeInTheDocument()
     expect(screen.getByText('Good')).toBeInTheDocument()
   })
+
+  it('renders assistant content as markdown', () => {
+    const messages: Message[] = [
+      makeMessage({ id: '1', role: 'assistant', content: '**bold** and `code`' }),
+    ]
+    const { container } = render(
+      <MessageList messages={messages} loading={false} />,
+    )
+    expect(container.querySelector('strong')).toHaveTextContent('bold')
+    expect(container.querySelector('code')).toHaveTextContent('code')
+    // Raw markdown markers must not leak as literal text.
+    expect(screen.queryByText('**bold**')).not.toBeInTheDocument()
+  })
+
+  it('renders header and link from markdown', () => {
+    const messages: Message[] = [
+      makeMessage({
+        id: '1',
+        role: 'assistant',
+        content: '# Title\n\n[docs](https://docs.example)',
+      }),
+    ]
+    const { container } = render(
+      <MessageList messages={messages} loading={false} />,
+    )
+    expect(container.querySelector('h1')).toHaveTextContent('Title')
+    const link = container.querySelector('a')
+    expect(link).toHaveAttribute('href', 'https://docs.example')
+    expect(link).toHaveAttribute('target', '_blank')
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+  })
+
+  it('renders user content as plain text, not markdown', () => {
+    const messages: Message[] = [
+      makeMessage({ id: '1', role: 'user', content: '**bold**' }),
+    ]
+    render(<MessageList messages={messages} loading={false} />)
+    expect(screen.getByText('**bold**')).toBeInTheDocument()
+    expect(screen.queryByText('bold')).not.toBeInTheDocument()
+  })
 })

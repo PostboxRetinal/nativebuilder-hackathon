@@ -41,6 +41,48 @@ describe('useResearch', () => {
     expect(hook.current.error).toBeNull()
   })
 
+  it('forwards an optional model to the edge function', async () => {
+    const result = {
+      answer: 'The pipeline is robust.',
+      sources: [{ title: 'Docs', url: 'https://example.com/docs' }],
+      iterations: 3,
+    }
+    invokeMock.mockResolvedValueOnce({ data: result, error: null })
+
+    const { result: hook } = renderHook(() => useResearch())
+
+    let data: typeof result | null = null
+    await act(async () => {
+      data = await hook.current.runResearch(
+        'how does it work',
+        undefined,
+        'deepseek/deepseek-r1',
+      )
+    })
+
+    expect(data).toEqual(result)
+    expect(invokeMock).toHaveBeenCalledWith('research', {
+      body: { query: 'how does it work', context: undefined, model: 'deepseek/deepseek-r1' },
+    })
+  })
+
+  it('omits model from body when none is selected', async () => {
+    invokeMock.mockResolvedValueOnce({ data: null, error: null })
+
+    const { result: hook } = renderHook(() => useResearch())
+
+    await act(async () => {
+      await hook.current.runResearch('query')
+    })
+
+    expect(invokeMock).toHaveBeenCalledWith('research', {
+      body: { query: 'query', context: undefined },
+    })
+    // No model key present when unset.
+    const body = invokeMock.mock.calls[0][1].body as Record<string, unknown>
+    expect('model' in body).toBe(false)
+  })
+
   it('sets an error and returns null when the edge function errors', async () => {
     invokeMock.mockResolvedValueOnce({
       data: null,

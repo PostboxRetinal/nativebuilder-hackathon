@@ -128,7 +128,7 @@ export default function VoiceInput({ onTranscriptFinal }: VoiceInputProps) {
 
   // ---- Main recording UI ----
   return (
-    <div className="w-full max-w-2xl mx-auto flex flex-col items-center gap-4">
+    <div className="flex flex-col items-stretch gap-3">
       {/* Transcription Preview */}
       <TranscriptionPreview
         partialText={partialText}
@@ -136,17 +136,17 @@ export default function VoiceInput({ onTranscriptFinal }: VoiceInputProps) {
         isRecording={state === "recording"}
       />
 
-      {/* Record Button */}
-      <RecordButton
-        state={state}
-        error={error}
-        onStart={startRecording}
-        onStop={stopRecording}
-        onRetry={startRecording}
-      />
-
-      {/* Language Selector */}
-      <LanguageToggle language={language} onChange={setLanguage} />
+      {/* Record button left, Language selector right of it */}
+      <div className="flex items-center justify-between gap-3">
+        <RecordButton
+          state={state}
+          error={error}
+          onStart={startRecording}
+          onStop={stopRecording}
+          onRetry={startRecording}
+        />
+        <LanguageToggle language={language} onChange={setLanguage} />
+      </div>
     </div>
   );
 }

@@ -1,4 +1,6 @@
 import { useEffect, useRef } from "react";
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import type { Message, Source } from "../types/models";
 import SourceCitation from "./SourceCitation";
 
@@ -7,6 +9,14 @@ interface MessageListProps {
   messages: Message[];
   loading: boolean;
 }
+
+// Anchor override: open rendered markdown links in a new tab, matching the
+// SourceCitation behavior. rel noopener+noreferrer prevents tab-nabbing.
+const markdownComponents = {
+  a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
+    <a {...props} target="_blank" rel="noopener noreferrer" />
+  ),
+};
 
 function normalizeSources(sources: unknown): Source[] {
   if (!Array.isArray(sources)) return [];
@@ -51,13 +61,22 @@ function MessageList({
         <div key={message.id} className="flex flex-col gap-1">
           <div
             data-testid={`message-${message.role}`}
-            className={`max-w-[80%] whitespace-pre-wrap rounded-lg px-4 py-2 ${
+            className={`max-w-[80%] rounded-lg px-4 py-2 ${
               message.role === "user"
-                ? "ml-auto bg-blue-600 text-white rounded-br-sm"
-                : "mr-auto bg-zinc-800 text-zinc-100 rounded-bl-sm"
+                ? "ml-auto bg-blue-600 text-white rounded-br-sm whitespace-pre-wrap"
+                : "mr-auto bg-zinc-800 text-zinc-100 rounded-bl-sm assistant-markdown"
             }`}
           >
-            {message.content}
+            {message.role === "user" ? (
+              message.content
+            ) : (
+              <Markdown
+                remarkPlugins={[remarkGfm]}
+                components={markdownComponents}
+              >
+                {message.content}
+              </Markdown>
+            )}
           </div>
           {message.role === "assistant" && (
             <div className="mr-auto flex flex-col">

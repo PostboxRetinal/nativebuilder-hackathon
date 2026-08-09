@@ -103,6 +103,9 @@ Client-side SPA on Vite. No Next.js, no Server Components, no "use server" — i
 8. App Assembly: AuthProvider > AuthGate > Sidebar + MessageList + VoiceInput layout
 9. Research Pipeline: `useResearch.ts` hook + `SourceCitation.tsx` cards + `Message` type widened with `sources` + wiring in `ConversationView` (user msg -> research EF -> assistant msg with sources)
 10. Account Management (frontend): sidebar account footer (email + avatar + Sign out), Delete account action with explicit confirmation dialog, wired to `delete-account` EF via `AuthContext.deleteAccount()`. Backend EF source versioned at `supabase/functions/delete-account/index.ts` (requires deployment to the project Supabase).
+11. Markdown answers: assistant responses render as formatted markdown via `react-markdown` + `remark-gfm` (`src/components/MessageList.tsx`, `src/index.css` `.assistant-markdown`). XSS-safe by default (no `rehype-raw`).
+12. Model selector: per-session AI/ML model dropdown (`src/components/ModelSelector.tsx`) forwarded through `useResearch` to the `research` Edge Function body as `model`. The deployed `research` EF (Supabase, version 4) accepts optional `model` and falls back to `DEFAULT_MODEL = "openai/gpt-5-2-chat-latest"`. Dropdown IDs validated against the live AI/ML API `/v1/models` catalog (openai/gpt-5-2-chat-latest, openai/gpt-4o-mini, deepseek/deepseek-r1, google/gemini-2.5-flash).
+13. Instant sidebar: `createConversation()` in `src/hooks/useConversations.ts` now optimistically prepends the new conversation so it appears immediately instead of waiting for realtime.
 
 ### Pending
 - End-to-end flow test (manual): auth -> record -> transcribe -> submit research -> see answer with sources

@@ -11,7 +11,11 @@ interface ResearchResult {
 type UseResearchReturn = {
   researching: boolean;
   error: string | null;
-  runResearch: (query: string, context?: string) => Promise<ResearchResult | null>;
+  runResearch: (
+    query: string,
+    context?: string,
+    model?: string,
+  ) => Promise<ResearchResult | null>;
 };
 
 export function useResearch(): UseResearchReturn {
@@ -19,13 +23,22 @@ export function useResearch(): UseResearchReturn {
   const [error, setError] = useState<string | null>(null);
 
   const runResearch = useCallback(
-    async (query: string, context?: string): Promise<ResearchResult | null> => {
+    async (
+      query: string,
+      context?: string,
+      model?: string,
+    ): Promise<ResearchResult | null> => {
       setResearching(true);
       setError(null);
       try {
+        const body: { query: string; context?: string; model?: string } = {
+          query,
+          context,
+        };
+        if (model != null) body.model = model;
         const { data, error } = await supabase.functions.invoke<ResearchResult>(
           "research",
-          { body: { query, context } },
+          { body },
         );
         if (error != null) {
           setError(`Research failed: ${error.message}`);

@@ -1,9 +1,10 @@
 import { useCallback, useRef, useState } from "react";
 import { useMessages } from "../hooks/useMessages";
-import { useConversations } from "../hooks/useConversations";
+import { useConversations } from "../contexts/ConversationsContext";
 import { useResearch } from "../hooks/useResearch";
 import MessageList from "./MessageList";
 import VoiceInput from "./VoiceInput";
+import ModelSelector from "./ModelSelector";
 
 interface ConversationViewProps {
   conversationId: string;
@@ -14,6 +15,7 @@ function ConversationView({ conversationId }: ConversationViewProps): React.Reac
   const { conversations, updateTitle } = useConversations();
   const { researching, runResearch } = useResearch();
   const [textInput, setTextInput] = useState("");
+  const [model, setModel] = useState<string | null>(null);
   const isFirstMessage = useRef(true);
 
   const conversation = conversations.find((c) => c.id === conversationId);
@@ -32,12 +34,12 @@ function ConversationView({ conversationId }: ConversationViewProps): React.Reac
         await updateTitle(conversationId, trimmed.slice(0, 30));
       }
 
-      const result = await runResearch(trimmed);
+      const result = await runResearch(trimmed, undefined, model ?? undefined);
       if (result != null) {
         await addMessage("assistant", result.answer, result.sources);
       }
     },
-    [conversationId, addMessage, updateTitle, runResearch],
+    [conversationId, addMessage, updateTitle, runResearch, model],
   );
 
   const handleSubmit = useCallback(
@@ -55,6 +57,9 @@ function ConversationView({ conversationId }: ConversationViewProps): React.Reac
       {/* Top bar */}
       <header className="flex items-center gap-4 border-b border-zinc-800 p-4">
         <h1 className="text-lg font-medium">{currentTitle}</h1>
+        <div className="ml-auto">
+          <ModelSelector value={model} onChange={setModel} />
+        </div>
       </header>
 
       {/* Messages */}
@@ -68,9 +73,8 @@ function ConversationView({ conversationId }: ConversationViewProps): React.Reac
 
       {/* Input */}
       <footer className="border-t border-zinc-800 p-4">
-        <div className="mx-auto flex max-w-4xl flex-col gap-4">
-          <VoiceInput onTranscriptFinal={sendMessage} />
-          <form onSubmit={handleSubmit} className="flex gap-2">
+        <div className="mx-auto flex max-w-4xl items-center gap-4">
+          <form onSubmit={handleSubmit} className="flex flex-1 gap-2">
             <input
               key="message-input"
               type="text"
@@ -86,6 +90,7 @@ function ConversationView({ conversationId }: ConversationViewProps): React.Reac
               Send
             </button>
           </form>
+          <VoiceInput onTranscriptFinal={sendMessage} />
         </div>
       </footer>
     </div>

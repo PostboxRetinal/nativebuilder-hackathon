@@ -1,21 +1,31 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { supabase } from "../lib/supabase";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "./AuthContext";
 import type { Database } from "../lib/database.types";
 
 type ConversationRow = Database["public"]["Tables"]["conversations"]["Row"];
 
 type Conversation = Pick<ConversationRow, "id" | "title" | "created_at">;
 
-type UseConversationsReturn = {
+interface ConversationsContextValue {
   conversations: Conversation[];
   loading: boolean;
   createConversation: () => Promise<string | null>;
   deleteConversation: (id: string) => Promise<void>;
   updateTitle: (id: string, title: string) => Promise<void>;
-};
+}
 
 const DEFAULT_TITLE = "New conversation";
+
+const ConversationsContext = createContext<ConversationsContextValue | null>(null);
 
 async function fetchConversations(
   userId: string,
@@ -30,7 +40,11 @@ async function fetchConversations(
   return data;
 }
 
-export function useConversations(): UseConversationsReturn {
+export function ConversationsProvider({
+  children,
+}: {
+  children: ReactNode;
+}): React.ReactNode {
   const { user } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -104,7 +118,7 @@ export function useConversations(): UseConversationsReturn {
     const { data, error } = await supabase
       .from("conversations")
       .insert({ title: DEFAULT_TITLE, user_id: user.id })
-      .select("id")
+      .select("id, title, created_at")
       .single();
 
     if (error != null) {
@@ -112,7 +126,15 @@ export function useConversations(): UseConversationsReturn {
       return null;
     }
 
-    return data.id;
+    // Optimistic update: surface the new conversation in the sidebar
+    // immediately, without waiting for the realtime feed. The realtime
+    // subscriber later refetches and reconciles ordering.
+    if (data != null) {
+      setConversations((prev) => [data, ...prev]);
+      return data.id;
+    }
+
+    return null;
   }, [user]);
 
   const deleteConversation = useCallback(
@@ -145,11 +167,25 @@ export function useConversations(): UseConversationsReturn {
     [],
   );
 
-  return {
-    conversations,
-    loading,
-    createConversation,
-    deleteConversation,
-    updateTitle,
-  };
+  return (
+    <ConversationsContext.Provider
+      value={{
+        conversations,
+        loading,
+        createConversation,
+        deleteConversation,
+        updateTitle,
+      }}
+    >
+      {children}
+    </ConversationsContext.Provider>
+  );
+}
+
+export function useConversations(): ConversationsContextValue {
+  const ctx = useContext(ConversationsContext);
+  if (ctx == null) {
+    throw new Error("useConversations must be used within a ConversationsProvider");
+  }
+  return ctx;
 }

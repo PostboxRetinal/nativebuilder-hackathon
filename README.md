@@ -13,7 +13,8 @@ A voice-powered developer research assistant built for the native.builder hackat
 
 - **Voice input**: tap-to-record microphone with real-time partial transcripts, editable before submit, and re-record.
 - **Speechmatics STT**: official real-time client; the session JWT is passed via `client.start()` and never embedded in a URL.
-- **Research pipeline**: a Supabase Edge Function runs a search→read→synthesize loop and returns an answer plus clickable source citations.
+- **Research pipeline**: a Supabase Edge Function runs a search→read→synthesize loop and returns an answer plus clickable source citations; the AI/ML model is selectable per session.
+- **Markdown answers**: assistant responses render as formatted markdown (headings, lists, code, tables, links) with source citations, XSS-safe by default.
 - **Persistent conversations**: auth-gated chat history with sequential ordering and real-time updates.
 - **Auth**: email/password via Supabase, enforced password policy, and server-side rate limiting on auth endpoints (Supabase-managed).
 - **Content Security Policy**: self-only sources with SRI hashing on the production build, Tailwind support in dev.
