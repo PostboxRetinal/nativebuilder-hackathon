@@ -89,13 +89,13 @@ function ConversationSidebar({
 
   if (loading) {
     return (
-      <div className="flex h-full w-72 flex-col border-r border-zinc-800 bg-zinc-950">
+      <div className="flex h-full w-72 flex-col border-r border-border bg-background">
         <div className="p-4">
-          <div className="h-10 w-full animate-pulse rounded-md bg-zinc-900" />
+          <div className="h-10 w-full animate-pulse rounded-md bg-secondary" />
         </div>
         <div className="space-y-2 px-2 pb-4">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-12 w-full animate-pulse rounded-md bg-zinc-900" />
+            <div key={i} className="h-12 w-full animate-pulse rounded-md bg-secondary" />
           ))}
         </div>
       </div>
@@ -103,11 +103,19 @@ function ConversationSidebar({
   }
 
   return (
-    <div className="flex h-full w-72 flex-col border-r border-zinc-800 bg-zinc-950">
+    <div className="flex h-full w-72 flex-col border-r border-border bg-background">
       <div className="p-4">
+        <div className="mb-3 flex items-center gap-2 px-1">
+          <span className="waveform" aria-hidden="true">
+            <span className="waveform-bar" /><span className="waveform-bar" />
+            <span className="waveform-bar" /><span className="waveform-bar" />
+            <span className="waveform-bar" />
+          </span>
+          <span className="text-sm font-semibold tracking-tight text-foreground">DevVoice</span>
+        </div>
         <button
           onClick={onCreateNew}
-          className="w-full rounded-md bg-white px-4 py-2 text-black transition-colors hover:bg-zinc-200 font-bold"
+          className="w-full rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-accent transition-all hover:opacity-90 active:scale-[0.98]"
         >
           New Chat
         </button>
@@ -122,29 +130,33 @@ function ConversationSidebar({
                 key={conv.id}
                 onClick={() => handleSelect(conv.id)}
                 className={`group relative cursor-pointer rounded-md px-3 py-2 transition-colors ${
-                  isSelected ? "bg-zinc-800" : "hover:bg-zinc-800"
+                  isSelected ? "bg-secondary" : "hover:bg-secondary"
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="truncate font-medium text-sm text-white">
+                  <span className="truncate font-medium text-sm text-foreground">
                     {truncate(conv.title, 40)}
                   </span>
                   <button
                     onClick={(e) => handleDelete(e, conv.id)}
-                    className="opacity-0 transition-opacity group-hover:opacity-100 p-1 text-zinc-500 hover:text-red-400"
+                    className="opacity-0 transition-opacity group-hover:opacity-100 p-1.5 rounded text-muted-foreground hover:text-destructive"
                     aria-label="Delete conversation"
                   >
-                    <span className="text-xs font-bold">X</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+                         strokeLinejoin="round" aria-hidden="true">
+                      <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14Z" />
+                    </svg>
                   </button>
                 </div>
-                <span className="mt-1 block text-[10px] text-zinc-400">
+                <span className="mt-1 block text-[10px] text-muted-foreground">
                   {formatRelativeTime(conv.created_at)}
                 </span>
               </div>
             );
           })}
           {conversations.length === 0 && (
-            <div className="mt-4 text-center text-xs text-zinc-400">
+            <div className="mt-4 text-center text-xs text-muted-foreground">
               No conversations found
             </div>
           )}
@@ -152,33 +164,33 @@ function ConversationSidebar({
       </div>
 
       {/* Account footer */}
-      <div className="border-t border-zinc-800 p-3">
+      <div className="border-t border-border p-3">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-xs font-semibold text-zinc-200">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-foreground">
             {user?.email?.slice(0, 2).toUpperCase() ?? "U"}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="truncate text-xs font-medium text-zinc-200">
+            <div className="truncate text-xs font-medium text-foreground">
               {user?.email ?? "Account"}
             </div>
-            <div className="truncate text-[10px] text-zinc-500">
+            <div className="truncate text-[10px] text-muted-foreground">
               {user?.email ?? "Signed in"}
             </div>
           </div>
           <button
             onClick={handleSignOut}
             data-testid="sign-out"
-            className="rounded-md border border-zinc-700 px-2.5 py-1.5 text-xs text-zinc-200 transition-colors hover:border-red-500/60 hover:text-red-400"
+            className="rounded-md border border-border px-2.5 py-1.5 text-xs text-foreground transition-colors hover:border-destructive/60 hover:text-destructive"
           >
             Sign out
           </button>
         </div>
-        <div className="mt-3 flex items-center justify-between text-[10px] text-zinc-500">
+        <div className="mt-3 flex items-center justify-between text-[11px] text-muted-foreground">
           <span>v{__APP_VERSION__}</span>
           <button
             onClick={() => setShowDeleteConfirm(true)}
             data-testid="delete-account"
-            className="text-zinc-600 transition-colors hover:text-red-400"
+            className="transition-colors hover:text-destructive"
           >
             Delete account
           </button>
@@ -192,21 +204,21 @@ function ConversationSidebar({
           aria-labelledby="delete-account-title"
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
         >
-          <div className="w-full max-w-sm rounded-lg border border-zinc-800 bg-zinc-950 p-5">
+          <div className="w-full max-w-sm rounded-lg border border-border bg-background p-5">
             <h2
               id="delete-account-title"
-              className="text-base font-semibold text-white"
+              className="text-base font-semibold text-foreground"
             >
               Delete account?
             </h2>
-            <p className="mt-2 text-sm text-zinc-400">
+            <p className="mt-2 text-sm text-muted-foreground">
               This permanently deletes your account and all conversations. This
               action cannot be undone.
             </p>
             {deleteError != null && (
               <p
                 data-testid="delete-account-error"
-                className="mt-2 text-xs text-red-400"
+                className="mt-2 text-xs text-destructive"
               >
                 {deleteError}
               </p>
@@ -215,7 +227,7 @@ function ConversationSidebar({
               <button
                 onClick={closeDeleteConfirm}
                 disabled={deleting}
-                className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs text-zinc-200 transition-colors hover:border-zinc-500 disabled:opacity-50"
+                className="rounded-md border border-border px-3 py-1.5 text-xs text-foreground transition-colors hover:border-accent/50 disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -223,7 +235,7 @@ function ConversationSidebar({
                 onClick={handleDeleteAccount}
                 disabled={deleting}
                 data-testid="confirm-delete-account"
-                className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-red-500 disabled:opacity-50"
+                className="rounded-md bg-destructive px-3 py-1.5 text-xs font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50"
               >
                 {deleting ? "Deleting..." : "Delete"}
               </button>

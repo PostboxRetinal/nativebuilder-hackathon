@@ -189,6 +189,49 @@
     border-top: 1px solid #3f3f46;
     margin: 0.75rem 0;
   }
+
+  /* Accent surface used for user bubbles and active chips. Tailwind v3 extends
+     colors as plain hex (no --color-* custom props, that is v4), so these
+     reference the config values directly: accent #22C55E, accent-muted #1A3A2A. */
+  .accent-surface {
+    background-color: #1A3A2A;
+    color: #F8FAFC;
+    border: 1px solid rgba(34, 197, 94, 0.25);
+  }
+
+  /* Shared chat-surface frame so every container uses the same token. */
+  .chat-surface {
+    background-color: #020617;
+  }
+
+  /* Voice-waveform wait state signature (researching / listening). */
+  .waveform {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .waveform-bar {
+    width: 3px;
+    height: 14px;
+    border-radius: 2px;
+    background-color: #22C55E;
+    animation: waveform 1.2s ease-in-out infinite;
+  }
+  .waveform-bar:nth-child(2) { animation-delay: 0.15s; }
+  .waveform-bar:nth-child(3) { animation-delay: 0.3s; }
+  .waveform-bar:nth-child(4) { animation-delay: 0.45s; }
+  .waveform-bar:nth-child(5) { animation-delay: 0.6s; }
+
+  /* Compact waveform for inline status (header "Researching"). */
+  .waveform-sm {
+    transform: scale(0.6);
+    transform-origin: left center;
+  }
+}
+
+@keyframes waveform {
+  0%, 100% { transform: scaleY(0.35); }
+  50% { transform: scaleY(1); }
 }
 
 @keyframes pulse-recording {

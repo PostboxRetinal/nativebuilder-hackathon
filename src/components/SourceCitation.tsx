@@ -1,6 +1,11 @@
 import type { Source } from "../types/models";
 
-function SourceCitation({ source }: { source: Source }) {
+interface SourceCitationProps {
+  source: Source;
+  index?: number;
+}
+
+function SourceCitation({ source, index }: SourceCitationProps) {
   let host = source.url;
   try {
     host = new URL(source.url).hostname;
@@ -14,21 +19,21 @@ function SourceCitation({ source }: { source: Source }) {
       target="_blank"
       rel="noopener noreferrer"
       data-testid="source-citation"
-      className="mt-2 flex items-start gap-2 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm transition-colors hover:border-zinc-600"
+      className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:border-accent/40 hover:text-foreground"
     >
+      {index != null && (
+        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-secondary text-[10px] font-medium text-muted-foreground">
+          {index}
+        </span>
+      )}
       <img
         src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(
           host,
         )}&sz=16`}
         alt=""
-        className="mt-0.5 h-4 w-4"
+        className="h-3.5 w-3.5"
       />
-      <span className="min-w-0">
-        <span className="block truncate font-medium text-zinc-100">
-          {source.title || host}
-        </span>
-        <span className="block truncate text-xs text-zinc-400">{host}</span>
-      </span>
+      <span className="max-w-[12rem] truncate">{source.title || host}</span>
     </a>
   );
 }

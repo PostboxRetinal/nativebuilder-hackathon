@@ -7,13 +7,16 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['system-ui', '-apple-system', 'sans-serif'],
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace'],
       },
       colors: {
         primary: '#0F172A',
         'on-primary': '#FFFFFF',
         secondary: '#1E293B',
         accent: '#22C55E',
+        'on-accent': '#02140B',
+        'accent-muted': '#1A3A2A',
         background: '#020617',
         foreground: '#F8FAFC',
         muted: '#1A1E2F',

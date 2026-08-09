@@ -22,19 +22,15 @@ function ChatBubble({ role, content }: ChatBubbleProps) {
   return (
     <div
       data-testid={`message-${role}`}
-      className={`max-w-[80%] rounded-lg px-4 py-2 ${
+      className={`max-w-[80%] rounded-lg px-4 py-2 assistant-markdown ${
         isUser
-          ? "ml-auto bg-blue-600 text-white rounded-br-sm whitespace-pre-wrap"
-          : "mr-auto bg-zinc-800 text-zinc-100 rounded-bl-sm assistant-markdown"
+          ? "ml-auto accent-surface rounded-br-sm"
+          : "mr-auto bg-muted border border-border rounded-bl-sm text-foreground"
       }`}
     >
-      {isUser ? (
-        content
-      ) : (
-        <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-          {content}
-        </Markdown>
-      )}
+      <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+        {content}
+      </Markdown>
     </div>
   );
 }

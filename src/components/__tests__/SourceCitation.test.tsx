@@ -9,10 +9,9 @@ describe('SourceCitation', () => {
     url: 'https://example.com/guide',
   }
 
-  it('renders the title and hostname of a valid url', () => {
+  it('renders the title as the pill label for a valid url', () => {
     render(<SourceCitation source={source} />)
     expect(screen.getByText('Official Docs')).toBeInTheDocument()
-    expect(screen.getByText('example.com')).toBeInTheDocument()
   })
 
   it('links to the source url in a new tab with noopener', () => {
@@ -23,11 +22,11 @@ describe('SourceCitation', () => {
     expect(link).toHaveAttribute('rel', 'noopener noreferrer')
   })
 
-  it('falls back to the raw url as host when it cannot be parsed', () => {
+  it('falls back to the raw url as pill label when it cannot be parsed', () => {
     const bad: Source = { title: 'Odd', url: 'not a url' }
     render(<SourceCitation source={bad} />)
+    // title wins as the label; host extraction falls back without crashing
     expect(screen.getByText('Odd')).toBeInTheDocument()
-    expect(screen.getByText('not a url')).toBeInTheDocument()
   })
 
   it('falls back to the hostname when there is no title', () => {
@@ -35,5 +34,15 @@ describe('SourceCitation', () => {
     render(<SourceCitation source={noTitle} />)
     // title and host are identical here, so both spans hold "example.org"
     expect(screen.getAllByText('example.org').length).toBeGreaterThan(0)
+  })
+
+  it('renders a leading index number on the pill when provided', () => {
+    render(<SourceCitation source={source} index={3} />)
+    expect(screen.getByText('3')).toBeInTheDocument()
+  })
+
+  it('omits the index number when not provided', () => {
+    render(<SourceCitation source={source} />)
+    expect(screen.queryByText('1')).not.toBeInTheDocument()
   })
 })

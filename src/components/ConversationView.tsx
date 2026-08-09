@@ -4,7 +4,7 @@ import { useConversations } from "../contexts/ConversationsContext";
 import { useResearch } from "../hooks/useResearch";
 import MessageList from "./MessageList";
 import VoiceInput from "./VoiceInput";
-import ModelSelector from "./ModelSelector";
+import ModelSelector, { DEFAULT_MODEL_ID, RESEARCH_MODELS } from "./ModelSelector";
 import ChatComposer from "./chat/ChatComposer";
 
 interface ConversationViewProps {
@@ -21,6 +21,7 @@ function ConversationView({ conversationId }: ConversationViewProps): React.Reac
 
   const conversation = conversations.find((c) => c.id === conversationId);
   const currentTitle = conversation?.title ?? "New Conversation";
+  const activeModel = RESEARCH_MODELS.find((m) => m.id === (model ?? DEFAULT_MODEL_ID));
 
   const sendMessage = useCallback(
     async (text: string) => {
@@ -52,14 +53,31 @@ function ConversationView({ conversationId }: ConversationViewProps): React.Reac
   );
 
   return (
-    <div className="flex h-full flex-col bg-black text-white">
+    <div className="flex h-full flex-col bg-background text-foreground">
       {/* Top bar */}
-      <header className="flex items-center gap-4 border-b border-zinc-800 p-4">
-        <h1 className="text-lg font-medium">{currentTitle}</h1>
+      <header className="flex items-center justify-between gap-4 border-b border-border p-4">
+        <h1 className="min-w-0 truncate text-base font-semibold tracking-tight">{currentTitle}</h1>
+        <div className="flex shrink-0 items-center gap-2">
+          {researching && (
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span className="waveform waveform-sm" role="status" aria-label="Researching">
+                <span className="waveform-bar" /><span className="waveform-bar" />
+                <span className="waveform-bar" /><span className="waveform-bar" />
+                <span className="waveform-bar" />
+              </span>
+              <span>Researching</span>
+            </span>
+          )}
+          {activeModel && (
+            <span className="rounded-full border border-border bg-muted px-2.5 py-1 text-[11px] font-mono text-muted-foreground">
+              {activeModel.label}
+            </span>
+          )}
+        </div>
       </header>
 
       {/* Messages */}
-      <main className="flex min-h-0 flex-1 overflow-hidden bg-black">
+      <main className="flex min-h-0 flex-1 overflow-hidden bg-background">
         <MessageList
           researching={researching}
           messages={messages}
@@ -68,13 +86,14 @@ function ConversationView({ conversationId }: ConversationViewProps): React.Reac
       </main>
 
       {/* Input */}
-      <footer className="border-t border-zinc-800 p-4">
+      <footer className="border-t border-border p-4">
         <div className="mx-auto flex max-w-4xl flex-col gap-2">
           <div className="flex items-center gap-4">
             <ChatComposer
               value={textInput}
               onChange={setTextInput}
               onSubmit={handleSubmit}
+              disabled={researching}
             />
             <VoiceInput onTranscriptFinal={sendMessage} />
           </div>

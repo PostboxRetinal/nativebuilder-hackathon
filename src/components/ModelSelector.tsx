@@ -58,7 +58,7 @@ export const MODEL_CATEGORIES: ModelCategory[] = [
 export const RESEARCH_MODELS = MODEL_CATEGORIES.flatMap((c) => c.models);
 
 // The model the `Default` option resolves to (must match the EF's DEFAULT_MODEL).
-const DEFAULT_MODEL_ID = "openai/gpt-5.6-luna";
+export const DEFAULT_MODEL_ID = "openai/gpt-5.6-luna";
 
 interface ModelSelectorProps {
   value: string | null;
@@ -72,13 +72,13 @@ function ModelSelector({
   const active = RESEARCH_MODELS.find((m) => m.id === (value ?? DEFAULT_MODEL_ID));
   return (
     <div className="flex flex-col">
-      <label className="flex items-center gap-2 text-xs text-zinc-400">
+      <label className="flex items-center gap-2 text-xs text-muted-foreground">
         <span className="whitespace-nowrap">Model</span>
         <select
           aria-label="Research model"
           value={value ?? ""}
           onChange={(e) => onChange(e.target.value === "" ? null : e.target.value)}
-          className="rounded-md border border-zinc-800 bg-zinc-900 px-2 py-1 text-xs font-medium text-zinc-200 transition-colors focus:border-zinc-600 cursor-pointer"
+          className="rounded-md border border-border bg-muted px-2 py-1 text-xs font-medium text-foreground transition-colors focus:border-accent/60 cursor-pointer"
         >
           <option value="">Default</option>
           {MODEL_CATEGORIES.map((cat) => (
@@ -93,7 +93,7 @@ function ModelSelector({
         </select>
       </label>
       {active && (
-        <span className="mt-0.5 text-[10px] text-zinc-500">
+        <span className="mt-1 text-[11px] font-mono text-muted-foreground">
           ${active.priceIn} in / ${active.priceOut} out (per 1M tokens)
         </span>
       )}
