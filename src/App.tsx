@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { Toaster } from "sonner";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import AuthScreen, { SetNewPassword } from "./components/AuthScreen";
 import { useConversations } from "./hooks/useConversations";
@@ -9,6 +10,9 @@ export default function App() {
   return (
     <AuthProvider>
       <AppContent />
+      {/* Mounted once at the app root so toasts survive the signOut that
+          follows account deletion (the sidebar that triggers it unmounts). */}
+      <Toaster theme="dark" position="top-center" richColors />
     </AuthProvider>
   );
 }

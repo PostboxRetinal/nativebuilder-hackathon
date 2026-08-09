@@ -6,6 +6,7 @@ import {
   type ReactNode,
 } from "react";
 import { supabase } from "../lib/supabase";
+import { toast } from "sonner";
 import type { User, Session } from "@supabase/supabase-js";
 
 interface AuthContextValue {
@@ -87,6 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       body: {},
     });
     if (error != null) return { error: error.message };
+    toast.success("Your account and all conversations were deleted.");
     await supabase.auth.signOut();
     return {};
   };
