@@ -106,7 +106,7 @@ function ChatMessage({ role, content, sources, isFirstInGroup = false, createdAt
             onClick={handleCopy}
             aria-label={copied ? "Copied" : "Copy response"}
             title="Copy response"
-            className="mb-0.5 flex shrink-0 items-center gap-1 rounded-md border border-border bg-muted px-2 py-1 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
+            className="mb-0.5 flex shrink-0 items-center gap-1 rounded-md bg-muted px-2 py-1 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
           >
             {copied ? (
               <span className="text-[10px] font-medium">Copied</span>
