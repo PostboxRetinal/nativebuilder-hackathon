@@ -25,13 +25,13 @@ export default defineConfig({
         'src/components/chat/index.ts',
       ],
       thresholds: {
-        // Baseline measured from current suite (see follow-up coverage plan).
-        // Set just under the real numbers so the gate is green today but fails
-        // on any regression. Raise as new component tests land.
-        statements: 25,
+        // Locked to observed coverage on 2026-08-10 (76.03/67.35/78.90/79.01).
+        // Floor set ~2pts below real so the gate is green today but fails on
+        // any regression. Raise as new tests land; never lower to mask one.
+        statements: 74,
         branches: 65,
-        functions: 60,
-        lines: 25,
+        functions: 76,
+        lines: 77,
       },
     },
   },

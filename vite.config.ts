@@ -48,9 +48,12 @@ export default defineConfig({
     cssMinify: true,
     sourcemap: 'hidden',
     rollupOptions: {
-      // @supabase/supabase-js is external but bundled locally via importmap.
-      // SRI not applicable - no CDN loading.
-      external: ['@supabase/supabase-js'],
+      // @supabase/supabase-js is bundled. It was previously `external` + loaded
+      // from esm.sh via an importmap in index.html, an OOM workaround for the
+      // old web-container sandbox. That combination broke production: the CSP
+      // has no esm.sh in its allowlist, so the module fetch was blocked and
+      // React never mounted. Bundling keeps the app self-contained and lets
+      // `default-src 'self'` mean what it says.
       treeshake: false,
     },
   },
