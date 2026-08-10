@@ -22,29 +22,56 @@ export class FishAudioTTSAdapter implements TTSAdapter {
     this.handlers.get(type)?.forEach((h) => h(data));
   }
 
+  private fallbackSpeak(text: string): Promise<void> {
+    return new Promise((resolve) => {
+      if (!("speechSynthesis" in window)) {
+        resolve();
+        return;
+      }
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.onend = () => resolve();
+      utterance.onerror = () => resolve();
+      window.speechSynthesis.speak(utterance);
+    });
+  }
+
   async speak(text: string): Promise<void> {
     if (!text.trim()) return;
     this.isStopped = false;
 
     this.emit("bot-tts-text", { text });
 
-    const { data, error } = await supabase.functions.invoke("fish-tts", {
-      body: { text, reference_id: this.referenceId },
-    });
+    try {
+      const { data, error } = await supabase.functions.invoke("fish-tts", {
+        body: { text, reference_id: this.referenceId },
+      });
 
-    if (error) {
-      this.emit("error", { message: `Fish Audio: ${error.message}`, code: "TTS_ERROR" });
-      return;
+      if (error) {
+        console.warn("[FishAudio] Edge Function failed, using fallback TTS:", error.message);
+        this.emit("error", { message: `Fish Audio: ${error.message}`, code: "TTS_FALLBACK" });
+        if (!this.isStopped) {
+          await this.fallbackSpeak(text);
+        }
+        return;
+      }
+
+      const audio = (data as { audio?: string })?.audio;
+      if (!audio) {
+        console.warn("[FishAudio] Empty response, using fallback TTS");
+        if (!this.isStopped) {
+          await this.fallbackSpeak(text);
+        }
+        return;
+      }
+
+      if (this.isStopped) return;
+      await this.playBase64(audio);
+    } catch (err) {
+      console.warn("[FishAudio] Unexpected error, using fallback TTS:", err);
+      if (!this.isStopped) {
+        await this.fallbackSpeak(text);
+      }
     }
-
-    const audio = (data as { audio?: string })?.audio;
-    if (!audio) {
-      this.emit("error", { message: "Fish Audio: empty response", code: "TTS_ERROR" });
-      return;
-    }
-
-    if (this.isStopped) return;
-    await this.playBase64(audio);
   }
 
   private async playBase64(base64: string): Promise<void> {

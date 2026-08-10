@@ -20,6 +20,7 @@ export default function ConversationModeView({
 }: ConversationModeViewProps) {
   const [model, setModel] = useState<string | null>(null);
   const lastSpokenRef = useRef<string>("");
+  const lastResponseRef = useRef<string>("");
 
   const {
     state,
@@ -36,10 +37,17 @@ export default function ConversationModeView({
     language: "en",
     onUserTranscriptFinal: async (text) => {
       const response = await onResearch(text, model ?? undefined);
-      if (response && response !== lastSpokenRef.current) {
-        lastSpokenRef.current = response;
-        await speak(response);
+      if (!response) return;
+      if (
+        response === lastResponseRef.current ||
+        (response === "Sorry, I could not process that." &&
+          lastResponseRef.current === "Sorry, I could not process that.")
+      ) {
+        return;
       }
+      lastResponseRef.current = response;
+      lastSpokenRef.current = response;
+      await speak(response);
     },
   });
 

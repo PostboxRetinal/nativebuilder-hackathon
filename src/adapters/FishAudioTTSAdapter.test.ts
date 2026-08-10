@@ -15,7 +15,6 @@ class MockAudioContext {
     connect: vi.fn(),
     disconnect: vi.fn(),
     start: vi.fn(function(this: any) {
-      // Auto-fire onended after a microtask so the promise resolves
       setTimeout(() => {
         if (this.onended) this.onended();
       }, 0);
@@ -55,7 +54,7 @@ describe("FishAudioTTSAdapter", () => {
     });
   });
 
-  it("speak() emits error when function returns error", async () => {
+  it("speak() emits error with TTS_FALLBACK code when function returns error", async () => {
     const errorHandler = vi.fn();
     adapter.onEvent("error", errorHandler);
 
@@ -64,16 +63,19 @@ describe("FishAudioTTSAdapter", () => {
       error: { message: "Function failed" },
     });
 
+    // Stub fallback to resolve immediately
+    (adapter as any).fallbackSpeak = vi.fn().mockResolvedValue(undefined);
+
     await adapter.speak("Test");
 
     expect(errorHandler).toHaveBeenCalledWith(
-      expect.objectContaining({ code: "TTS_ERROR" })
+      expect.objectContaining({ code: "TTS_FALLBACK" })
     );
   });
 
-  it("speak() emits error when response has no audio", async () => {
-    const errorHandler = vi.fn();
-    adapter.onEvent("error", errorHandler);
+  it("speak() calls fallback when response has no audio", async () => {
+    const fallbackSpy = vi.fn().mockResolvedValue(undefined);
+    (adapter as any).fallbackSpeak = fallbackSpy;
 
     (supabase.functions.invoke as any).mockResolvedValue({
       data: { audio: undefined },
@@ -82,9 +84,7 @@ describe("FishAudioTTSAdapter", () => {
 
     await adapter.speak("Test");
 
-    expect(errorHandler).toHaveBeenCalledWith(
-      expect.objectContaining({ message: "Fish Audio: empty response" })
-    );
+    expect(fallbackSpy).toHaveBeenCalledWith("Test");
   });
 
   it("speak() skips playback when stopped before decode", async () => {

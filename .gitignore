@@ -35,3 +35,6 @@ coverage
 # Environment
 .env
 .env.local
+
+# Supabase
+supabase/.temp

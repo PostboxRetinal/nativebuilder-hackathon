@@ -91,8 +91,12 @@ function ConversationView({ conversationId }: ConversationViewProps): React.Reac
 
   const handleResearch = useCallback(
     async (text: string, modelOverride?: string) => {
+      const trimmed = text.trim();
+      if (trimmed.length < 3) {
+        return "I didn't catch that. Could you please repeat?";
+      }
       const activeModel = modelOverride ?? model;
-      const result = await runResearch(text, undefined, activeModel ?? undefined);
+      const result = await runResearch(trimmed, undefined, activeModel ?? undefined);
       return result?.answer ?? "Sorry, I could not process that.";
     },
     [runResearch, model],
