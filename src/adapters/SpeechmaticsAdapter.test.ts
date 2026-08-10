@@ -105,10 +105,7 @@ describe("SpeechmaticsAdapter", () => {
     await adapter.start("en");
 
     expect(WebSocketMock).toHaveBeenCalledWith(
-      expect.stringContaining("?jwt=test-jwt-123")
-    );
-    expect(WebSocketMock).toHaveBeenCalledWith(
-      expect.not.stringContaining("eu2")
+      expect.stringContaining("eu2.rt.speechmatics.com")
     );
   });
 

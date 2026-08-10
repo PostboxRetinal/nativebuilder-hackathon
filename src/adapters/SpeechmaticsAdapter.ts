@@ -26,7 +26,7 @@ export class SpeechmaticsAdapter implements STTAdapter {
       return;
     }
 
-    const wsUrl = `wss://eu.rt.speechmatics.com/v2/${language}?jwt=${encodeURIComponent(token)}`;
+    const wsUrl = `wss://eu2.rt.speechmatics.com/v2/${language}?jwt=${encodeURIComponent(token)}`;
     this.ws = new WebSocket(wsUrl);
 
     this.ws.onopen = () => {
@@ -36,7 +36,7 @@ export class SpeechmaticsAdapter implements STTAdapter {
         transcription_config: {
           language,
           enable_partials: true,
-          max_delay: 0.5,
+          max_delay: 0.7,
         },
       }));
     };
