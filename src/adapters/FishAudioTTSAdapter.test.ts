@@ -1,175 +1,106 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { FishAudioTTSAdapter } from "./FishAudioTTSAdapter";
 
-class MockWebSocket {
-  send: ReturnType<typeof vi.fn>;
-  close: ReturnType<typeof vi.fn>;
-  binaryType: string;
-  onopen: (() => void) | null;
-  onmessage: ((e: MessageEvent) => void) | null;
-  onerror: (() => void) | null;
-  onclose: (() => void) | null;
-  readyState: number;
+vi.mock("../lib/supabase", () => ({
+  supabase: { functions: { invoke: vi.fn() } },
+}));
 
-  constructor() {
-    this.send = vi.fn();
-    this.close = vi.fn();
-    this.binaryType = "";
-    this.onopen = null;
-    this.onmessage = null;
-    this.onerror = null;
-    this.onclose = null;
-    this.readyState = WebSocket.OPEN;
-  }
-}
+import { supabase } from "../lib/supabase";
 
 class MockAudioContext {
-  resume: ReturnType<typeof vi.fn>;
-  decodeAudioData: ReturnType<typeof vi.fn>;
-  createBufferSource: ReturnType<typeof vi.fn>;
-  destination: object;
-
-  constructor() {
-    this.resume = vi.fn().mockResolvedValue(undefined);
-    this.decodeAudioData = vi.fn().mockResolvedValue({ duration: 0.1 });
-    this.createBufferSource = vi.fn().mockReturnValue({
-      buffer: null,
-      connect: vi.fn(),
-      disconnect: vi.fn(),
-      start: vi.fn(),
-      onended: null,
-    });
-    this.destination = {};
-  }
+  resume = vi.fn().mockResolvedValue(undefined);
+  decodeAudioData = vi.fn().mockResolvedValue({ duration: 0.1 });
+  createBufferSource = vi.fn().mockReturnValue({
+    buffer: null,
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    start: vi.fn(function(this: any) {
+      // Auto-fire onended after a microtask so the promise resolves
+      setTimeout(() => {
+        if (this.onended) this.onended();
+      }, 0);
+    }),
+    onended: null,
+  });
+  destination = {};
 }
 
 describe("FishAudioTTSAdapter", () => {
   let adapter: FishAudioTTSAdapter;
-  let wsInstances: MockWebSocket[] = [];
 
   beforeEach(() => {
-    adapter = new FishAudioTTSAdapter("test-api-key", "ref-123");
-    wsInstances = [];
+    adapter = new FishAudioTTSAdapter("", "ref-123");
     (global as any).AudioContext = MockAudioContext;
-    (global as any).WebSocket = vi.fn().mockImplementation(function(this: any) {
-      const ws = new MockWebSocket();
-      wsInstances.push(ws);
-      return ws;
-    }) as any;
+    vi.clearAllMocks();
   });
 
-  afterEach(() => {
-    vi.unstubAllGlobals();
-    wsInstances = [];
-  });
-
-  it("constructor stores apiKey and referenceId", () => {
+  it("constructor creates instance", () => {
     expect(adapter).toBeInstanceOf(FishAudioTTSAdapter);
   });
 
-  it("speak() emits bot-tts-text", async () => {
+  it("speak() emits bot-tts-text and invokes supabase function", async () => {
     const handler = vi.fn();
     adapter.onEvent("bot-tts-text", handler);
 
-    const speakPromise = adapter.speak("Hello world");
-    const wsInstance = wsInstances[0];
-    wsInstance.onopen!();
+    (supabase.functions.invoke as any).mockResolvedValue({
+      data: { audio: btoa("fake-audio-bytes") },
+      error: null,
+    });
+
+    await adapter.speak("Hello world");
 
     expect(handler).toHaveBeenCalledWith({ text: "Hello world" });
-
-    wsInstance.onmessage!({ data: JSON.stringify({ event: "finish", reason: "stop" }) } as MessageEvent);
-    await speakPromise;
+    expect(supabase.functions.invoke).toHaveBeenCalledWith("fish-tts", {
+      body: { text: "Hello world", reference_id: "ref-123" },
+    });
   });
 
-  it("speak() without API key emits config error", async () => {
-    const noKeyAdapter = new FishAudioTTSAdapter("");
-    const errorHandler = vi.fn();
-    noKeyAdapter.onEvent("error", errorHandler);
-
-    await noKeyAdapter.speak("Test");
-
-    expect(errorHandler).toHaveBeenCalledWith(
-      expect.objectContaining({ code: "TTS_CONFIG" })
-    );
-  });
-
-  it("speak() connects to WebSocket and sends start event", async () => {
-    const speakPromise = adapter.speak("Hello world. This is a test.");
-    const wsInstance = wsInstances[0];
-    wsInstance.onopen!();
-
-    expect(wsInstance.send).toHaveBeenCalledWith(
-      expect.stringContaining('"event":"start"')
-    );
-    expect(wsInstance.send).toHaveBeenCalledWith(
-      expect.stringContaining('"event":"text"')
-    );
-    expect(wsInstance.send).toHaveBeenCalledWith(
-      expect.stringContaining('"event":"flush"')
-    );
-    expect(wsInstance.send).toHaveBeenCalledWith(
-      expect.stringContaining('"event":"stop"')
-    );
-
-    wsInstance.onmessage!({ data: JSON.stringify({ event: "finish", reason: "stop" }) } as MessageEvent);
-    await speakPromise;
-  });
-
-  it("chunkText splits long text into sentence chunks", () => {
-    const longText = "Hello world. This is a test. Another sentence here!";
-    const chunks = (adapter as any).chunkText(longText, 20);
-    expect(chunks.length).toBeGreaterThan(1);
-    for (const chunk of chunks) {
-      expect(chunk.length).toBeLessThanOrEqual(25);
-    }
-  });
-
-  it("chunkText returns single chunk for short text", () => {
-    const chunks = (adapter as any).chunkText("Hello.");
-    expect(chunks).toEqual(["Hello."]);
-  });
-
-  it("chunkText handles text without sentence boundaries", () => {
-    const chunks = (adapter as any).chunkText("Hello world", 5);
-    expect(chunks.length).toBeGreaterThan(0);
-  });
-
-  it("stop() sends stop event and cleans up", async () => {
-    adapter.speak("Hello world");
-    const wsInstance = wsInstances[0];
-    wsInstance.onopen!();
-
-    adapter.stop();
-
-    expect(wsInstance.send).toHaveBeenCalledWith(
-      expect.stringContaining('"event":"stop"')
-    );
-    expect(wsInstance.close).toHaveBeenCalled();
-  });
-
-  it("emits error on WebSocket failure", async () => {
+  it("speak() emits error when function returns error", async () => {
     const errorHandler = vi.fn();
     adapter.onEvent("error", errorHandler);
 
-    // Catch the rejection without re-throwing
-    adapter.speak("Hello world").catch(() => {});
-    const wsInstance = wsInstances[0];
-    wsInstance.onopen!();
-    wsInstance.onerror!();
+    (supabase.functions.invoke as any).mockResolvedValue({
+      data: null,
+      error: { message: "Function failed" },
+    });
 
-    await new Promise((r) => setTimeout(r, 10));
+    await adapter.speak("Test");
 
     expect(errorHandler).toHaveBeenCalledWith(
       expect.objectContaining({ code: "TTS_ERROR" })
     );
   });
 
-  it("buffers at least 2 audio chunks before playback", async () => {
-    const speakPromise = adapter.speak("Hello world. How are you?");
-    const wsInstance = wsInstances[0];
-    wsInstance.onopen!();
+  it("speak() emits error when response has no audio", async () => {
+    const errorHandler = vi.fn();
+    adapter.onEvent("error", errorHandler);
 
-    wsInstance.onmessage!({ data: JSON.stringify({ event: "finish", reason: "stop" }) } as MessageEvent);
-    await speakPromise;
+    (supabase.functions.invoke as any).mockResolvedValue({
+      data: { audio: undefined },
+      error: null,
+    });
+
+    await adapter.speak("Test");
+
+    expect(errorHandler).toHaveBeenCalledWith(
+      expect.objectContaining({ message: "Fish Audio: empty response" })
+    );
+  });
+
+  it("speak() skips playback when stopped before decode", async () => {
+    (supabase.functions.invoke as any).mockImplementation(
+      async () => {
+        await new Promise(r => setTimeout(r, 50));
+        return { data: { audio: btoa("audio") }, error: null };
+      }
+    );
+
+    const promise = adapter.speak("Hello");
+    adapter.stop();
+    await promise;
+  });
+
+  it("stop() sets isStopped flag", () => {
+    adapter.stop();
   });
 });

@@ -95,36 +95,33 @@ The WaveformVisualizer SHALL call `audioContext.resume()` after creating the Aud
 
 ## ADDED Requirements (v0.5.2 — Voice Agent TTS + UI)
 
-### Requirement: TTS via Fish Audio WebSocket streaming
-The FishAudioTTSAdapter SHALL use WebSocket (`wss://api.fish.audio/v1/tts/live`) for real-time text-to-speech generation per Fish Audio best practices.
-- Protocol: JSON events (start, text, flush, stop) + binary audio frames
-- Auth: `Authorization: Bearer ${apiKey}` in start event
-- Audio: `format: "mp3"`, `latency: "balanced"`, `model: "s2.1-pro-free"`
+### Requirement: TTS via Supabase Edge Function proxy
+The FishAudioTTSAdapter SHALL invoke the `fish-tts` Supabase Edge Function via `supabase.functions.invoke()`. The Edge Function proxies to Fish Audio REST API (`POST https://api.fish.audio/v1/tts`) using the `FISH_AUDIO_API_KEY` secret stored in Supabase. The API key SHALL NEVER be exposed to the client.
+- Request body: `{ text, reference_id?, model? }`
+- Response: `{ audio: base64 }` (mp3)
+- Auth: Supabase anon key (client) + function secret (server)
 - Optional voice cloning via `reference_id`
 
-### Requirement: TTS text chunking
-The FishAudioTTSAdapter SHALL split long text into sentence-level chunks (max 150 chars) before synthesis to reduce time-to-first-audio per Fish Audio's "buffer 5-10 words" recommendation.
-
-### Requirement: TTS audio buffering
-The FishAudioTTSAdapter SHALL buffer at least 2 audio chunks before starting playback to prevent gaps from network jitter, with a 500ms timeout fallback.
+### Requirement: TTS audio playback
+The FishAudioTTSAdapter SHALL decode the base64 audio response using `AudioContext.decodeAudioData()` and play it via a `bufferSource` node.
+- Stop playback if `isStopped` flag is set before decode
+- Emit error event on decode failure
 
 ### Requirement: TTS error handling
-The FishAudioTTSAdapter SHALL emit error events on WebSocket failures and clean up resources.
-- Emit `{ message: "Fish Audio WebSocket error", code: "TTS_ERROR" }`
-- Close WebSocket and clear queue on error
+The FishAudioTTSAdapter SHALL emit error events when the Edge Function returns an error or empty audio.
+- Emit `{ message: "Fish Audio: <detail>", code: "TTS_ERROR" }`
 
-### Requirement: Agent TTS playback via Fish Audio
-The ConversationModeView SHALL play agent responses aloud using Fish Audio S2.1 Pro TTS via HTTP streaming and Web Audio API playback.
+### Requirement: Agent TTS playback via Supabase proxy
+The ConversationModeView SHALL play agent responses aloud via the `fish-tts` Edge Function proxy. The API key lives exclusively in Supabase secrets.
 - Model: `s2.1-pro-free` (free tier)
-- Auth: `Authorization: Bearer VITE_FISH_AUDIO_API_KEY`
-- Optional voice cloning via `reference_id`
+- Voice cloning via `reference_id` (optional env var)
 
 #### Scenario: Agent speaks response
 - **WHEN** the research pipeline returns a response
-- **THEN** the text is sent to Fish Audio TTS and audio plays via Web Audio API
+- **THEN** the text is sent to the fish-tts Edge Function and audio plays via Web Audio API
 
 #### Scenario: TTS error handling
-- **WHEN** Fish Audio API returns an error
+- **WHEN** the Edge Function returns an error or empty response
 - **THEN** the error is displayed in the conversation UI and the agent continues in text-only mode
 
 ### Requirement: RTVI-style event architecture

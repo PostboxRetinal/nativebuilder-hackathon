@@ -1,21 +1,15 @@
 import type { TTSAdapter, RTVIEventMap, RTVIEventType } from "../types/rtvi";
+import { supabase } from "../lib/supabase";
 
 type Handler<T extends RTVIEventType> = (data: RTVIEventMap[T]) => void;
 
 export class FishAudioTTSAdapter implements TTSAdapter {
   private handlers: Map<RTVIEventType, Set<Handler<any>>> = new Map();
-  private apiKey: string;
   private referenceId?: string;
-  private ws: WebSocket | null = null;
-  private audioQueue: ArrayBuffer[] = [];
-  private isPlaying = false;
-  private resolveSession: (() => void) | null = null;
-  private rejectSession: ((err: Error) => void) | null = null;
   private audioCtx: AudioContext | null = null;
   private isStopped = false;
 
-  constructor(apiKey: string, referenceId?: string) {
-    this.apiKey = apiKey;
+  constructor(_apiKey: string, referenceId?: string) {
     this.referenceId = referenceId;
   }
 
@@ -29,108 +23,49 @@ export class FishAudioTTSAdapter implements TTSAdapter {
   }
 
   async speak(text: string): Promise<void> {
-    if (!this.apiKey) {
-      this.emit("error", { message: "Fish Audio API key not configured", code: "TTS_CONFIG" });
+    if (!text.trim()) return;
+    this.isStopped = false;
+
+    this.emit("bot-tts-text", { text });
+
+    const { data, error } = await supabase.functions.invoke("fish-tts", {
+      body: { text, reference_id: this.referenceId },
+    });
+
+    if (error) {
+      this.emit("error", { message: `Fish Audio: ${error.message}`, code: "TTS_ERROR" });
       return;
     }
 
-    if (this.ws) {
-      this.cleanup();
+    const audio = (data as { audio?: string })?.audio;
+    if (!audio) {
+      this.emit("error", { message: "Fish Audio: empty response", code: "TTS_ERROR" });
+      return;
     }
 
-    this.emit("bot-tts-text", { text });
-    this.isStopped = false;
-    const chunks = this.chunkText(text);
-
-    return new Promise((resolve, reject) => {
-      this.resolveSession = resolve;
-      this.rejectSession = reject;
-      this.connectWebSocket(chunks);
-    });
+    if (this.isStopped) return;
+    await this.playBase64(audio);
   }
 
-  private connectWebSocket(chunks: string[]) {
-    const wsUrl = "wss://api.fish.audio/v1/tts/live";
-    this.ws = new WebSocket(wsUrl);
-    this.ws.binaryType = "arraybuffer";
-
-    this.ws.onopen = () => {
-      this.ws?.send(JSON.stringify({
-        event: "start",
-        request: {
-          text: "",
-          format: "mp3",
-          chunk_length: 300,
-          reference_id: this.referenceId,
-          latency: "balanced",
-        },
-        Authorization: `Bearer ${this.apiKey}`,
-      }));
-
-      for (const chunk of chunks) {
-        this.ws?.send(JSON.stringify({ event: "text", text: chunk }));
-      }
-
-      this.ws?.send(JSON.stringify({ event: "flush" }));
-      this.ws?.send(JSON.stringify({ event: "stop" }));
-    };
-
-    this.ws.onmessage = async (e: MessageEvent) => {
-      if (this.isStopped) return;
-
-      if (e.data instanceof ArrayBuffer) {
-        this.audioQueue.push(e.data);
-        if (this.audioQueue.length >= 2 && !this.isPlaying) {
-          this.isPlaying = true;
-          await this.drainQueue();
-        }
-      } else {
-        try {
-          const msg = JSON.parse(e.data);
-          if (msg.event === "finish") {
-            if (this.audioQueue.length > 0 && !this.isPlaying) {
-              this.isPlaying = true;
-              await this.drainQueue();
-            }
-            this.cleanup();
-            this.resolveSession?.();
-          }
-        } catch {
-          // ignore non-JSON text frames
-        }
-      }
-    };
-
-    this.ws.onerror = () => {
-      if (this.isStopped) return;
-      this.cleanup();
-      const err = new Error("Fish Audio WebSocket error");
-      this.emit("error", { message: err.message, code: "TTS_ERROR" });
-      this.rejectSession?.(err);
-    };
-  }
-
-  private async drainQueue(): Promise<void> {
-    while (this.audioQueue.length > 0 && !this.isStopped) {
-      const chunk = this.audioQueue.shift()!;
-      await this.decodeAndPlay(chunk);
-    }
-    this.isPlaying = false;
-  }
-
-  private async decodeAndPlay(arrayBuffer: ArrayBuffer): Promise<void> {
+  private async playBase64(base64: string): Promise<void> {
     if (!this.audioCtx) {
       this.audioCtx = new AudioContext();
       await this.audioCtx.resume();
     }
 
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+
     try {
-      const decoded = await this.audioCtx.decodeAudioData(arrayBuffer.slice(0));
+      const decoded = await this.audioCtx.decodeAudioData(bytes.buffer);
+      if (this.isStopped) return;
+
       const source = this.audioCtx.createBufferSource();
       source.buffer = decoded;
       source.connect(this.audioCtx.destination);
 
-      return new Promise((resolve) => {
+      await new Promise<void>((resolve) => {
         source.onended = () => {
           source.disconnect();
           resolve();
@@ -138,42 +73,11 @@ export class FishAudioTTSAdapter implements TTSAdapter {
         source.start();
       });
     } catch {
-      // Skip undecodable chunks
+      // Skip undecodable audio
     }
-  }
-
-  private cleanup() {
-    if (this.ws) {
-      this.ws.onclose = null;
-      this.ws.close();
-      this.ws = null;
-    }
-    this.audioQueue = [];
-    this.isPlaying = false;
   }
 
   stop() {
     this.isStopped = true;
-    if (this.ws?.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({ event: "stop" }));
-    }
-    this.cleanup();
-  }
-
-  private chunkText(text: string, maxChunkLength = 150): string[] {
-    const sentences = text.match(/[^.!?]+[.!?]*\s*/g) || [text];
-    const chunks: string[] = [];
-    let current = '';
-
-    for (const sentence of sentences) {
-      if (current.length + sentence.length > maxChunkLength && current.length > 0) {
-        chunks.push(current.trim());
-        current = sentence;
-      } else {
-        current += sentence;
-      }
-    }
-    if (current.trim()) chunks.push(current.trim());
-    return chunks.length > 0 ? chunks : [text];
   }
 }

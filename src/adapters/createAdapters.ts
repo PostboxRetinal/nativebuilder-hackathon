@@ -9,9 +9,8 @@ export function createAdapters() {
     cachedStt = new SpeechmaticsAdapter();
   }
   if (!cachedTts) {
-    const fishApiKey = import.meta.env.VITE_FISH_AUDIO_API_KEY ?? "";
     const fishReferenceId = import.meta.env.VITE_FISH_AUDIO_REFERENCE_ID;
-    cachedTts = new FishAudioTTSAdapter(fishApiKey, fishReferenceId || undefined);
+    cachedTts = new FishAudioTTSAdapter("", fishReferenceId || undefined);
   }
   return { stt: cachedStt, tts: cachedTts };
 }
