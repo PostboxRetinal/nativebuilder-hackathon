@@ -26,6 +26,15 @@ export default {
         destructive: '#EF4444',
         ring: '#0F172A',
       },
+      keyframes: {
+        breathe: {
+          "0%, 100%": { transform: "scale(1)", opacity: "0.8" },
+          "50%": { transform: "scale(1.05)", opacity: "1" },
+        },
+      },
+      animation: {
+        breathe: "breathe 3s ease-in-out infinite",
+      },
     },
   },
   plugins: [],

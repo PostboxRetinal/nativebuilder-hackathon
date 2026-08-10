@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import type { STTAdapter, TTSAdapter } from "../types/rtvi";
 import { useVoiceAgent } from "../hooks/useVoiceAgent";
 import { ConversationBubbles } from "./ConversationBubbles";
-import WaveformVisualizer from "./WaveformVisualizer";
+import ConversationOrb from "./ConversationOrb";
 import ModelSelector from "./ModelSelector";
 
 interface ConversationModeViewProps {
@@ -77,12 +77,12 @@ export default function ConversationModeView({
 
       <footer className="border-t border-border bg-surface px-4 py-3">
         <div className="flex flex-col items-center gap-2">
-          {isListening && <WaveformVisualizer stream={null} isRecording={true} />}
+          <ConversationOrb state={isSpeaking ? "speaking" : isListening ? "listening" : isProcessing ? "processing" : "idle"} />
           <div className="flex items-center justify-center gap-3">
             <button
               type="button"
-              onClick={isListening ? stopListening : startListening}
-              disabled={isProcessing || isSpeaking}
+              onClick={isSpeaking ? () => { stopListening(); } : isListening ? stopListening : startListening}
+              disabled={isProcessing}
               aria-label={isListening ? "Stop recording" : "Start recording"}
               className={`flex h-12 w-12 items-center justify-center rounded-full shadow-lg transition-transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 ${
                 isListening ? "bg-destructive text-white" : "bg-cyan-500 text-white"
@@ -96,7 +96,7 @@ export default function ConversationModeView({
             </button>
           </div>
           <p className="mt-2 text-center text-[11px] text-muted-foreground">
-            {isListening ? "Tap to stop" : isProcessing ? "Processing..." : isSpeaking ? "Agent speaking..." : "Tap the mic to start"}
+            {isSpeaking ? "Tap to interrupt" : isListening ? "Tap to stop" : isProcessing ? "Processing..." : "Tap the mic to start"}
           </p>
           {error && <p className="text-[11px] text-destructive">{error}</p>}
         </div>

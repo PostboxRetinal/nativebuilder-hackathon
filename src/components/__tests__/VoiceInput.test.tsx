@@ -10,7 +10,6 @@ const baseProps = {
   onStart: vi.fn(),
   onStop: vi.fn(),
   onRetry: vi.fn(),
-  onEnterConversationMode: vi.fn(),
 };
 
 describe("VoiceInput", () => {
@@ -62,21 +61,5 @@ describe("VoiceInput", () => {
   it("falls back to 'Tap to retry' when error is empty", () => {
     render(<VoiceInput {...baseProps} state="error" error="" />);
     expect(screen.getByRole("button", { name: /tap to retry/i })).toBeInTheDocument();
-  });
-
-  it("calls onEnterConversationMode when conversation button clicked", async () => {
-    const user = userEvent.setup();
-    const onEnterConversationMode = vi.fn();
-    render(
-      <VoiceInput
-        {...baseProps}
-        state="idle"
-        onEnterConversationMode={onEnterConversationMode}
-      />,
-    );
-    await user.click(
-      screen.getByRole("button", { name: /conversation mode/i }),
-    );
-    expect(onEnterConversationMode).toHaveBeenCalled();
   });
 });

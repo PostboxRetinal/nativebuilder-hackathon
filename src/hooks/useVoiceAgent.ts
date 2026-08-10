@@ -49,7 +49,6 @@ export function useVoiceAgent(
   const [error, setError] = useState<string | null>(null);
 
   const handlers = useRef<Map<RTVIEventType, Set<Handler<any>>>>(new Map());
-  const currentMessageId = useRef<string | null>(null);
   const isSpeakingRef = useRef(false);
 
   const emit = useCallback(
@@ -107,12 +106,24 @@ export function useVoiceAgent(
     };
 
     const handleTranscriptFinal = (data: RTVIEventMap["user-transcript-final"]) => {
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === data.messageId ? { ...m, status: "sent" } : m,
-        ),
-      );
-      currentMessageId.current = null;
+      setMessages((prev) => {
+        const existing = prev.find((m) => m.id === data.messageId);
+        if (existing) {
+          // Update existing message to sent
+          return prev.map((m) => (m.id === data.messageId ? { ...m, status: "sent" } : m));
+        }
+        // Create new sent message if no streaming existed
+        return [
+          ...prev,
+          {
+            id: data.messageId,
+            role: "user",
+            text: data.text,
+            timestamp: Date.now(),
+            status: "sent",
+          },
+        ];
+      });
       onUserTranscriptFinal(data.text);
     };
 
@@ -143,13 +154,15 @@ export function useVoiceAgent(
       return;
     }
     setError(null);
-    currentMessageId.current = crypto.randomUUID();
     setStateAndEmit("listening");
     await sttAdapter.start(language);
   }, [state, sttAdapter, language, setStateAndEmit]);
 
   const stopListening = useCallback(() => {
     sttAdapter.stop();
+    // Also stop TTS if playing
+    ttsAdapter.stop();
+    isSpeakingRef.current = false;
     setStateAndEmit("idle");
   }, [sttAdapter, setStateAndEmit]);
 
@@ -162,8 +175,9 @@ export function useVoiceAgent(
       setError(null);
       setStateAndEmit("speaking");
 
+      const agentMsgId = crypto.randomUUID();
       const agentMsg: ChatMessage = {
-        id: crypto.randomUUID(),
+        id: agentMsgId,
         role: "agent",
         text,
         timestamp: Date.now(),
@@ -171,10 +185,24 @@ export function useVoiceAgent(
       setMessages((prev) => [...prev, agentMsg]);
 
       try {
-        await ttsAdapter.speak(text);
+        // Add 30s timeout to prevent hanging
+        await Promise.race([
+          ttsAdapter.speak(text),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("TTS timeout after 30s")), 30000),
+          ),
+        ]);
+        // Update message status to 'sent' on success
+        setMessages((prev) =>
+          prev.map((m) => (m.id === agentMsgId ? { ...m, status: "sent" } : m)),
+        );
       } catch (err) {
         const msg = err instanceof Error ? err.message : "TTS failed";
         setError(msg);
+        // Update message status to 'error' on failure
+        setMessages((prev) =>
+          prev.map((m) => (m.id === agentMsgId ? { ...m, status: "error" } : m)),
+        );
       } finally {
         isSpeakingRef.current = false;
         setStateAndEmit("idle");
@@ -191,7 +219,6 @@ export function useVoiceAgent(
 
   const resetMessages = useCallback(() => {
     setMessages([]);
-    currentMessageId.current = null;
   }, []);
 
   return {

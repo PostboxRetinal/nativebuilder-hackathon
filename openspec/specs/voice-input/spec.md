@@ -173,6 +173,26 @@ The voice input SHALL provide a visually distinct pulsing orb (speech bubble ico
 - **WHEN** the user taps the orb
 - **THEN** the app navigates to full-screen ConversationModeView
 
+### Requirement: Animated conversation orb
+
+While in conversation mode, the system SHALL display an animated orb that reacts to the current agent state: pulsing on listening, bouncing on speaking, spinning on processing, and slow breathing on idle. The orb SHALL have a cyan gradient with glow effect and outer ripple rings when active.
+
+#### Scenario: Orb pulses while listening
+- **WHEN** the agent is listening to the user
+- **THEN** the orb shows a pulse animation with cyan glow
+
+#### Scenario: Orb bounces while speaking
+- **WHEN** the agent is speaking a response
+- **THEN** the orb shows a bounce animation
+
+#### Scenario: Orb spins while processing
+- **WHEN** the agent is processing a response
+- **THEN** the orb shows a spin animation
+
+#### Scenario: Orb breathes while idle
+- **WHEN** the agent is idle (waiting for user input)
+- **THEN** the orb shows a slow breathing animation
+
 ### Requirement: Model Selector in Conversation Mode
 
 The ConversationModeView SHALL include a model selector that lets the user pick which AI model generates responses.
@@ -264,22 +284,27 @@ The voice agent SHALL use a modular event system with the following contracts:
 ### Requirement: Chat bubble UI
 
 The ConversationModeView SHALL display messages as independent chat bubbles:
-- User bubbles: right-aligned, cyan background
-- Agent bubbles: left-aligned, dark slate background with Markdown rendering
-- Streaming bubbles: pulse animation while transcription is incomplete
+- User bubbles: left-aligned, dark slate background with border
+- Agent bubbles: right-aligned, cyan background
+- Streaming bubbles: animated bouncing dots while transcription is incomplete
+- Sent messages: checkmark indicator
 - Each message is a separate entity (no concatenation)
 
-#### Scenario: User message appears on right
+#### Scenario: User message appears on left
 - **WHEN** the user speaks and transcription finalizes
-- **THEN** a cyan bubble appears on the right side with the transcribed text
+- **THEN** a slate bubble appears on the left side with the transcribed text and a checkmark
 
-#### Scenario: Agent message appears on left with Markdown
+#### Scenario: Agent message appears on right with Markdown
 - **WHEN** the research response contains Markdown formatting
-- **THEN** a slate bubble appears on the left with rendered Markdown (bold, code, lists)
+- **THEN** a cyan bubble appears on the right with rendered Markdown (bold, code, lists)
 
 #### Scenario: Streaming indicator
 - **WHEN** transcription is in progress (partial results)
-- **THEN** the user bubble shows a pulse animation
+- **THEN** the user bubble shows three animated bouncing dots
+
+#### Scenario: Sent indicator
+- **WHEN** a message has been successfully delivered/processed
+- **THEN** a small checkmark appears next to the message text
 
 ### Requirement: AudioWorklet for PCM capture
 
@@ -303,20 +328,25 @@ The SpeechmaticsAdapter SHALL authenticate using a temporary JWT passed as a que
 - **WHEN** the adapter connects to Speechmatics with a valid JWT in the URL
 - **THEN** the WebSocket connects successfully (no "Not Authorized" error)
 
-### Requirement: Microphone toggle
+### Requirement: Microphone control
 
-The user SHALL stop the recording stream by pressing the mic button again:
-- First press: starts recording (state → listening)
-- Second press while recording: stops (state → idle)
-- Visual indicator: mic icon ↔ stop icon toggle
+The user SHALL control the microphone via a prominent button that is always enabled (except during processing). Tapping the button while the agent is speaking SHALL stop both TTS playback and STT recording. Tapping while listening SHALL stop recording.
 
-#### Scenario: Toggle mic off
-- **WHEN** the user presses the mic button while recording
-- **THEN** recording stops and the button shows the mic icon again
+#### Scenario: Stop while speaking
+- **WHEN** the user taps the mic button while the agent is speaking
+- **THEN** TTS playback stops, the WebSocket closes, and state returns to idle
+
+#### Scenario: Stop while listening
+- **WHEN** the user taps the mic button while recording
+- **THEN** recording stops and the transcript finalizes
 
 #### Scenario: Visual state change
+- **WHEN** the agent is speaking
+- **THEN** the button shows a stop icon with destructive color
 - **WHEN** recording is active
-- **THEN** the button shows a stop icon and destructive color; otherwise shows mic icon and cyan color
+- **THEN** the button shows a stop icon with destructive color
+- **WHEN** idle
+- **THEN** the button shows a mic icon with cyan color
 
 ### Requirement: TTS fallback to Web Speech API
 
@@ -341,6 +371,14 @@ The useVoiceAgent hook SHALL prevent concurrent TTS calls by tracking a speaking
 #### Scenario: Concurrent TTS requests
 - **WHEN** the user speaks while the agent is still speaking a previous response
 - **THEN** the new TTS request is ignored until the current one completes
+
+### Requirement: TTS timeout
+
+The useVoiceAgent hook SHALL enforce a 30-second timeout on TTS playback. If the TTS adapter does not complete within 30 seconds, the hook SHALL treat it as a failure and transition to idle state.
+
+#### Scenario: TTS hangs
+- **WHEN** the TTS adapter takes longer than 30 seconds to complete
+- **THEN** the hook rejects with a timeout error and returns to idle state
 
 ### Requirement: Event handler cleanup
 
@@ -378,6 +416,14 @@ The fish-tts Edge Function SHALL send the model selection as an HTTP header (`mo
 - **WHEN** the Edge Function calls `https://api.fish.audio/v1/tts`
 - **THEN** the request includes `model: s2.1-pro-free` as an HTTP header
 
+### Requirement: Fish Audio chunked base64 encoding
+
+The fish-tts Edge Function SHALL encode the audio response in base64 using chunked processing (8192 bytes per chunk) to avoid stack overflow errors when converting large audio buffers.
+
+#### Scenario: Large audio response
+- **WHEN** Fish Audio returns a large MP3 payload
+- **THEN** the Edge Function processes the buffer in 8192-byte chunks to build the base64 string without exceeding the call stack limit
+
 ### Requirement: Research retry with backoff
 
 The research Edge Function SHALL implement retry logic with exponential backoff when AI/ML API returns a 429 Too Many Requests response. The retry delays SHALL be 1s, 2s, and 4s (3 attempts total).
@@ -397,3 +443,19 @@ The STTAdapter and TTSAdapter interfaces SHALL include an `offEvent` method to r
 #### Scenario: Handler removed
 - **WHEN** `offEvent` is called with a type and handler reference
 - **THEN** the handler is removed from the internal handler set and will not be called on future events
+
+### Requirement: Agent message status tracking
+
+The useVoiceAgent hook SHALL track the status of agent messages as `streaming` while TTS is playing and update to `sent` on success or `error` on failure.
+
+#### Scenario: Agent message streaming
+- **WHEN** the agent starts speaking a response
+- **THEN** the message has status `streaming`
+
+#### Scenario: Agent message sent
+- **WHEN** TTS playback completes successfully
+- **THEN** the message status updates to `sent`
+
+#### Scenario: Agent message error
+- **WHEN** TTS playback fails
+- **THEN** the message status updates to `error`

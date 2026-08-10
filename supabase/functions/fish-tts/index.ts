@@ -71,7 +71,13 @@ Deno.serve(async (req: Request) => {
     }
 
     const audioBuffer = await response.arrayBuffer();
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(audioBuffer)));
+    const bytes = new Uint8Array(audioBuffer);
+    let binary = "";
+    const chunk = 8192;
+    for (let i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+    }
+    const base64 = btoa(binary);
     return new Response(
       JSON.stringify({ audio: base64 }),
       { status: 200, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } },

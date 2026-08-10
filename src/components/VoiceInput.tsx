@@ -59,7 +59,6 @@ export interface VoiceInputProps {
   onStart: () => void;
   onStop: () => void;
   onRetry: () => void;
-  onEnterConversationMode: () => void;
 }
 
 // Compact inline mic control that lives inside the 44px composer row. It no
@@ -73,7 +72,6 @@ export default function VoiceInput({
   onStart,
   onStop,
   onRetry,
-  onEnterConversationMode,
 }: VoiceInputProps) {
   const isRecording = state === "recording";
   const isProcessing = state === "processing";
@@ -128,7 +126,7 @@ export default function VoiceInput({
           <MicIcon className="w-5 h-5" />
         )}
       </button>
-      <ConversationOrb onClick={onEnterConversationMode} />
+      <ConversationOrb state="idle" />
       <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
         <span className="whitespace-nowrap">STT</span>
         <select

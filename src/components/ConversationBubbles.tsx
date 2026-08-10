@@ -19,14 +19,14 @@ export function ConversationBubbles({ messages }: ConversationBubblesProps) {
         return (
           <div
             key={msg.id}
-            className={`flex ${isUser ? "justify-end" : "justify-start"}`}
+            className={`flex ${isUser ? "justify-start" : "justify-end"}`}
           >
             <div
               className={`
                 max-w-[80%] px-4 py-2 rounded-2xl
                 ${isUser
-                  ? "bg-cyan-600 text-white rounded-br-sm"
-                  : "bg-slate-800 text-slate-100 rounded-bl-sm border border-slate-700"
+                  ? "bg-slate-800 text-slate-100 rounded-bl-sm border border-slate-700"
+                  : "bg-cyan-600 text-white rounded-br-sm"
                 }
                 ${isStreaming ? "animate-pulse" : ""}
               `}
@@ -34,14 +34,14 @@ export function ConversationBubbles({ messages }: ConversationBubblesProps) {
               {isUser ? (
                 isStreaming ? (
                   <div className="flex gap-1 items-center py-1">
-                    <span className="w-2 h-2 bg-white/70 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                    <span className="w-2 h-2 bg-white/70 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                    <span className="w-2 h-2 bg-white/70 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                    <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
                   </div>
                 ) : (
                   <div className="flex items-center gap-1">
                     <p className="text-sm">{msg.text}</p>
-                    {isSent && <span className="text-[10px] text-cyan-300 ml-1">✓</span>}
+                    {isSent && <span className="text-[10px] text-slate-400 ml-1">✓</span>}
                   </div>
                 )
               ) : (
