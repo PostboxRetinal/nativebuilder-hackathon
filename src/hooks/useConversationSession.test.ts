@@ -7,7 +7,7 @@ describe("useConversationSession", () => {
 
   it("starts in idle state", () => {
     const { result } = renderHook(() =>
-      useConversationSession("en", mockResearch),
+      useConversationSession({ language: "en", onResearch: mockResearch }),
     );
     expect(result.current.state).toBe("idle");
     expect(result.current.userText).toBe("");
@@ -16,7 +16,7 @@ describe("useConversationSession", () => {
 
   it("transitions to listening on startListening", () => {
     const { result } = renderHook(() =>
-      useConversationSession("en", mockResearch),
+      useConversationSession({ language: "en", onResearch: mockResearch }),
     );
     act(() => result.current.startListening());
     expect(result.current.state).toBe("listening");
@@ -24,7 +24,7 @@ describe("useConversationSession", () => {
 
   it("updates userText on onPartial", () => {
     const { result } = renderHook(() =>
-      useConversationSession("en", mockResearch),
+      useConversationSession({ language: "en", onResearch: mockResearch }),
     );
     act(() => result.current.onPartial("hello world"));
     expect(result.current.userText).toBe("hello world");
@@ -32,7 +32,7 @@ describe("useConversationSession", () => {
 
   it("transitions to processing on onFinal", () => {
     const { result } = renderHook(() =>
-      useConversationSession("en", mockResearch),
+      useConversationSession({ language: "en", onResearch: mockResearch }),
     );
     act(() => result.current.onFinal("final text"));
     expect(result.current.state).toBe("processing");
@@ -41,7 +41,7 @@ describe("useConversationSession", () => {
 
   it("transitions to speaking on onAgentResponse", () => {
     const { result } = renderHook(() =>
-      useConversationSession("en", mockResearch),
+      useConversationSession({ language: "en", onResearch: mockResearch }),
     );
     act(() => result.current.onAgentResponse("agent reply"));
     expect(result.current.state).toBe("speaking");
@@ -50,17 +50,17 @@ describe("useConversationSession", () => {
 
   it("calls onResearch when EndOfUtterance fires", async () => {
     const { result } = renderHook(() =>
-      useConversationSession("en", mockResearch),
+      useConversationSession({ language: "en", onResearch: mockResearch }),
     );
     await act(async () => {
       result.current.onEndOfUtterance("hello");
     });
-    expect(mockResearch).toHaveBeenCalledWith("hello");
+    expect(mockResearch).toHaveBeenCalledWith("hello", undefined);
   });
 
   it("clears all state on reset", () => {
     const { result } = renderHook(() =>
-      useConversationSession("en", mockResearch),
+      useConversationSession({ language: "en", onResearch: mockResearch }),
     );
     act(() => result.current.startListening());
     act(() => result.current.onPartial("text"));

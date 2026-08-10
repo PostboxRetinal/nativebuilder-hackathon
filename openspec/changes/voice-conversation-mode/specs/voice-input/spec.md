@@ -61,3 +61,34 @@ The user SHALL be able to start and stop microphone recording with a single tap 
 #### Scenario: Auto-stop on end-of-utterance (conversation mode)
 - **WHEN** end-of-utterance is detected while recording in conversation mode
 - **THEN** recording stops automatically and the transcript becomes available without user interaction
+
+## ADDED Requirements (v0.5.1 — Conversation Mode Polish)
+
+### Requirement: Conversation Orb CTA
+The voice input SHALL provide a visually distinct pulsing orb (speech bubble icon, NOT a mic) as the entry point to conversation mode. The orb SHALL have animated cyan→violet gradient glow.
+
+#### Scenario: Orb visible in composer row
+- **WHEN** the composer row is visible
+- **THEN** a pulsing orb with speech bubble icon is rendered next to the mic button
+
+#### Scenario: Tap orb enters conversation mode
+- **WHEN** the user taps the orb
+- **THEN** the app navigates to full-screen ConversationModeView
+
+### Requirement: Model Selector in Conversation Mode
+The ConversationModeView SHALL include a model selector that lets the user pick which AI model generates responses.
+
+#### Scenario: Model selector visible
+- **WHEN** ConversationModeView is active
+- **THEN** a model selector dropdown is visible in the header
+
+#### Scenario: Selected model used for research
+- **WHEN** the user selects a model and speaks
+- **THEN** the research pipeline receives the selected model ID
+
+### Requirement: Waveform AudioContext resume
+The WaveformVisualizer SHALL call `audioContext.resume()` after creating the AudioContext to ensure the waveform animates immediately after mic opens.
+
+#### Scenario: Waveform animates after mic opens
+- **WHEN** the user starts recording and a MediaStream is available
+- **THEN** the canvas renders an animated waveform (not a flat line)

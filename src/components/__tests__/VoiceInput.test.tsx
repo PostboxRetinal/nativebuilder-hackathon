@@ -75,7 +75,7 @@ describe("VoiceInput", () => {
       />,
     );
     await user.click(
-      screen.getByRole("button", { name: /enter conversation mode/i }),
+      screen.getByRole("button", { name: /conversation mode/i }),
     );
     expect(onEnterConversationMode).toHaveBeenCalled();
   });

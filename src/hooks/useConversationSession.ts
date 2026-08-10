@@ -23,10 +23,16 @@ export interface UseConversationSessionReturn {
   reset: () => void;
 }
 
+export interface UseConversationSessionOptions {
+  language?: SpeechLanguage;
+  onResearch: (text: string, model?: string) => Promise<string>;
+  model?: string | null;
+}
+
 export function useConversationSession(
-  language: SpeechLanguage = "en",
-  onResearch: (text: string) => Promise<string>,
+  options: UseConversationSessionOptions,
 ): UseConversationSessionReturn {
+  const { language = "en", onResearch, model = null } = options;
   const [state, setState] = useState<ConversationState>("idle");
   const [userText, setUserText] = useState("");
   const [agentText, setAgentText] = useState("");
@@ -35,12 +41,15 @@ export function useConversationSession(
   const researchRef = useRef(onResearch);
   researchRef.current = onResearch;
 
+  const modelRef = useRef(model);
+  modelRef.current = model;
+
   const handleEndOfUtterance = useCallback(
     async (text: string) => {
       if (state === "processing") return;
       setState("processing");
       try {
-        const answer = await researchRef.current(text);
+        const answer = await researchRef.current(text, modelRef.current ?? undefined);
         setAgentText(answer);
         setState("speaking");
       } catch (err) {

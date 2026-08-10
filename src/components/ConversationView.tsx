@@ -89,8 +89,9 @@ function ConversationView({ conversationId }: ConversationViewProps): React.Reac
     voice.state === "recording" || !!voice.partialText || !!voice.finalText;
 
   const handleResearch = useCallback(
-    async (text: string) => {
-      const result = await runResearch(text, undefined, model ?? undefined);
+    async (text: string, modelOverride?: string) => {
+      const activeModel = modelOverride ?? model;
+      const result = await runResearch(text, undefined, activeModel ?? undefined);
       return result?.answer ?? "Sorry, I could not process that.";
     },
     [runResearch, model],

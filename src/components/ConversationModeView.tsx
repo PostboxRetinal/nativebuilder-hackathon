@@ -1,15 +1,19 @@
+import { useState } from "react";
 import { useConversationSession } from "../hooks/useConversationSession";
 import WaveformVisualizer from "./WaveformVisualizer";
+import ModelSelector from "./ModelSelector";
 
 interface ConversationModeViewProps {
   onExit: () => void;
-  onResearch: (text: string) => Promise<string>;
+  onResearch: (text: string, model?: string) => Promise<string>;
 }
 
 export default function ConversationModeView({
   onExit,
   onResearch,
 }: ConversationModeViewProps) {
+  const [model, setModel] = useState<string | null>(null);
+
   const {
     state,
     userText,
@@ -17,7 +21,7 @@ export default function ConversationModeView({
     stream,
     startListening,
     stopListening,
-  } = useConversationSession("en", onResearch);
+  } = useConversationSession({ language: "en", onResearch, model });
 
   const isListening = state === "listening";
   const isProcessing = state === "processing";
@@ -36,7 +40,9 @@ export default function ConversationModeView({
           Back
         </button>
         <h1 className="text-sm font-semibold tracking-tight">Conversation Mode</h1>
-        <div className="w-16" />
+        <div className="flex items-center gap-2">
+          <ModelSelector value={model} onChange={setModel} />
+        </div>
       </header>
 
       <main className="flex min-h-0 flex-1 gap-4 p-4">
