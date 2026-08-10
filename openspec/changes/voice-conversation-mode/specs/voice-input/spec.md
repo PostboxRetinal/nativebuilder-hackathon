@@ -143,6 +143,16 @@ The ConversationModeView SHALL display messages as independent chat bubbles:
 - **WHEN** transcription is in progress (partial results)
 - **THEN** the user bubble shows a pulse animation
 
+### Requirement: AudioWorklet for PCM capture
+The SpeechmaticsAdapter SHALL use `AudioWorkletNode` instead of the deprecated `ScriptProcessorNode` for audio capture and PCM16 conversion.
+- Worklet file: `public/pcm-capture-worklet.js`
+- Processor name: `pcm-capture-processor`
+- Worklet receives Float32 audio frames, converts to PCM16 (Int16Array), posts to main thread
+
+#### Scenario: No deprecation warning
+- **WHEN** the user starts recording in conversation mode
+- **THEN** the console shows no ScriptProcessorNode deprecation warning
+
 ### Requirement: Microphone toggle
 The user SHALL stop the recording stream by pressing the mic button again:
 - First press: starts recording (state → listening)

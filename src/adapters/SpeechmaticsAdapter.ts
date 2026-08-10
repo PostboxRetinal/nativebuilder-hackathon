@@ -85,38 +85,41 @@ export class SpeechmaticsAdapter implements STTAdapter {
   private async startAudioCapture() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        audio: { sampleRate: 16000, channelCount: 1, echoCancellation: true, noiseSuppression: true },
+        audio: {
+          sampleRate: { ideal: 16000 },
+          channelCount: { ideal: 1 },
+          echoCancellation: true,
+          noiseSuppression: true,
+        },
       });
 
       const audioContext = new AudioContext({ sampleRate: 16000 });
       await audioContext.resume();
       const source = audioContext.createMediaStreamSource(stream);
 
-      const bufferSize = 4096;
-      const processor = audioContext.createScriptProcessor(bufferSize, 1, 1);
+      await audioContext.audioWorklet.addModule('/pcm-capture-worklet.js');
 
-      processor.onaudioprocess = (e) => {
+      const workletNode = new AudioWorkletNode(audioContext, 'pcm-capture-processor', {
+        numberOfInputs: 1,
+        numberOfOutputs: 0,
+        channelCount: 1,
+      });
+
+      workletNode.port.onmessage = (e: MessageEvent) => {
+        const pcm16 = e.data as Int16Array;
         if (this.ws?.readyState === WebSocket.OPEN) {
-          const inputData = e.inputBuffer.getChannelData(0);
-          const pcm16 = this.float32ToPcm16(inputData);
-          this.ws?.send(pcm16.buffer as ArrayBuffer);
+          try {
+            this.ws.send(pcm16.buffer as ArrayBuffer);
+          } catch {
+            // ignore send errors
+          }
         }
       };
 
-      source.connect(processor);
-      processor.connect(audioContext.destination);
+      source.connect(workletNode);
     } catch {
-      this.emit("error", { message: "Microphone access denied", code: "MIC" });
+      this.emit('error', { message: 'Microphone access denied', code: 'MIC' });
     }
-  }
-
-  private float32ToPcm16(float32: Float32Array): Int16Array {
-    const pcm16 = new Int16Array(float32.length);
-    for (let i = 0; i < float32.length; i++) {
-      const s = Math.max(-1, Math.min(1, float32[i]));
-      pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
-    }
-    return pcm16;
   }
 
   private joinTranscript(data: any): string {
