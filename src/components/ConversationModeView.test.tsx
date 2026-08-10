@@ -42,13 +42,13 @@ describe("ConversationModeView", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders the mic button to start recording", () => {
+  it("renders the orb button to start conversation", () => {
     const adapters = createMockAdapters();
     render(
       <ConversationModeView onExit={() => {}} onResearch={mockResearch} sttAdapter={adapters.stt} ttsAdapter={adapters.tts} />,
     );
     expect(
-      screen.getByRole("button", { name: /start recording/i }),
+      screen.getByRole("button", { name: /start conversation/i }),
     ).toBeInTheDocument();
   });
 
@@ -65,28 +65,11 @@ describe("ConversationModeView", () => {
     expect(onExit).toHaveBeenCalledTimes(1);
   });
 
-  it("shows stop button when recording (toggle)", async () => {
-    const adapters = createMockAdapters();
-    const user = userEvent.setup();
-    render(
-      <ConversationModeView onExit={() => {}} onResearch={mockResearch} sttAdapter={adapters.stt} ttsAdapter={adapters.tts} />,
-    );
-    // Click mic to start
-    await user.click(
-      screen.getByRole("button", { name: /start recording/i }),
-    );
-    // Now should show stop
-    expect(
-      screen.getByRole("button", { name: /stop recording/i }),
-    ).toBeInTheDocument();
-  });
-
   it("renders ConversationBubbles component", () => {
     const adapters = createMockAdapters();
     render(
       <ConversationModeView onExit={() => {}} onResearch={mockResearch} sttAdapter={adapters.stt} ttsAdapter={adapters.tts} />,
     );
-    // ConversationBubbles renders "No messages yet" when empty
     expect(screen.getByText("No messages yet")).toBeInTheDocument();
   });
 });
