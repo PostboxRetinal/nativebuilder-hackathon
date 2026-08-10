@@ -58,6 +58,7 @@ export interface VoiceInputProps {
   onStart: () => void;
   onStop: () => void;
   onRetry: () => void;
+  onEnterConversationMode: () => void;
 }
 
 // Compact inline mic control that lives inside the 44px composer row. It no
@@ -71,6 +72,7 @@ export default function VoiceInput({
   onStart,
   onStop,
   onRetry,
+  onEnterConversationMode,
 }: VoiceInputProps) {
   const isRecording = state === "recording";
   const isProcessing = state === "processing";
@@ -124,6 +126,30 @@ export default function VoiceInput({
         ) : (
           <MicIcon className="w-5 h-5" />
         )}
+      </button>
+      <button
+        type="button"
+        onClick={onEnterConversationMode}
+        aria-label="Enter conversation mode"
+        className="h-11 w-11 shrink-0 flex items-center justify-center rounded-lg transition-all duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring cursor-pointer border border-cyan-400/30 bg-cyan-400/5 text-cyan-400/80 hover:bg-cyan-400/10 hover:text-cyan-400"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3Z" />
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+          <line x1="12" x2="12" y1="19" y2="23" />
+          <line x1="8" x2="16" y1="23" y2="23" />
+        </svg>
       </button>
       <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
         <span className="whitespace-nowrap">STT</span>

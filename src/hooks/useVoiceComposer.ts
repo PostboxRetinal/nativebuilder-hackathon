@@ -10,17 +10,19 @@ import { useSpeechmatics, type SpeechLanguage } from "./useSpeechmatics";
  */
 export function useVoiceComposer(onTranscriptFinal: (text: string) => void) {
   const [language, setLanguage] = useState<SpeechLanguage>("en");
+  const [editedText, setEditedText] = useState("");
+  const [conversationMode, setConversationMode] = useState(false);
+
   const {
     state,
     partialText,
     finalText,
     error,
+    stream,
     startRecording,
     stopRecording,
     reset,
-  } = useSpeechmatics(language);
-
-  const [editedText, setEditedText] = useState("");
+  } = useSpeechmatics(language, { conversationMode });
 
   // Populate edit area when transcription finishes.
   useEffect(() => {
@@ -47,10 +49,13 @@ export function useVoiceComposer(onTranscriptFinal: (text: string) => void) {
     partialText,
     finalText,
     error,
+    stream,
     language,
     setLanguage,
     editedText,
     setEditedText,
+    conversationMode,
+    setConversationMode,
     startRecording,
     stopRecording,
     reset,

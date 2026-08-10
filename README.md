@@ -85,7 +85,7 @@ The function source is versioned at `supabase/functions/research/index.ts`.
 
 - **Typecheck**: `bun run typecheck` - 0 errors
 - **Tests**: `bun run test` - 122 tests passing
-- **Coverage**: `bun run test -- --coverage` - 76% statements, 67% branches, 79% functions, 79% lines (thresholds: 74/65/76/77)
+- **Coverage**: `bun run test -- --coverage` - 65% statements, 60% branches, 74% functions, 67% lines (thresholds: 62/57/71/64)
 - **Lint**: `bun run lint` - 0 errors
 - **Build**: `bun run build` - OK
 

@@ -9,6 +9,7 @@ import ModelSelector, { getActiveModel } from "./ModelSelector";
 import ChatComposer from "./chat/ChatComposer";
 import TranscriptionPreview from "./chat/TranscriptionPreview";
 import VoiceTranscriptEditor from "./chat/VoiceTranscriptEditor";
+import ConversationModeView from "./ConversationModeView";
 
 function PencilIcon({ className }: { className?: string }) {
   return (
@@ -44,6 +45,7 @@ function ConversationView({ conversationId }: ConversationViewProps): React.Reac
   const [editingTitle, setEditingTitle] = useState(false);
   const [draftTitle, setDraftTitle] = useState("");
   const isFirstMessage = useRef(true);
+  const [inConversationMode, setInConversationMode] = useState(false);
 
   const voice = useVoiceComposer((text) => void sendMessage(text));
 
@@ -85,6 +87,23 @@ function ConversationView({ conversationId }: ConversationViewProps): React.Reac
 
   const showPreview =
     voice.state === "recording" || !!voice.partialText || !!voice.finalText;
+
+  const handleResearch = useCallback(
+    async (text: string) => {
+      const result = await runResearch(text, undefined, model ?? undefined);
+      return result?.answer ?? "Sorry, I could not process that.";
+    },
+    [runResearch, model],
+  );
+
+  if (inConversationMode) {
+    return (
+      <ConversationModeView
+        onExit={() => setInConversationMode(false)}
+        onResearch={handleResearch}
+      />
+    );
+  }
 
   return (
     <div data-testid="chat-column" className="flex h-full flex-col mx-auto w-full max-w-3xl bg-background text-foreground">
@@ -187,6 +206,7 @@ function ConversationView({ conversationId }: ConversationViewProps): React.Reac
                 onStart={voice.startRecording}
                 onStop={voice.stopRecording}
                 onRetry={voice.startRecording}
+                onEnterConversationMode={() => setInConversationMode(true)}
               />
             </div>
           </div>

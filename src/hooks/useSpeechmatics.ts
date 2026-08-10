@@ -23,11 +23,6 @@ export type SpeechLanguage =
   | "ja"
   | "cmn";
 
-/**
- * Maps a UI selector value to the Speechmatics transcription config.
- * The Spanish-English bilingual pack requires `domain: "bilingual-en"`.
- * Validated against https://docs.speechmatics.com/speech-to-text/languages
- */
 const LANGUAGE_CONFIG: Record<
   SpeechLanguage,
   { language: string; domain?: string }
@@ -43,11 +38,21 @@ const LANGUAGE_CONFIG: Record<
   cmn: { language: "cmn" },
 };
 
+export interface UseSpeechmaticsOptions {
+  /** When true, Speechmatics handles turn detection and recording continues
+   *  across pauses until the user explicitly stops. */
+  conversationMode?: boolean;
+  /** Called when an end-of-utterance is detected in conversation mode.
+   *  The accumulated final text up to that point is passed. */
+  onEndOfUtterance?: (text: string) => void;
+}
+
 export interface UseSpeechmaticsReturn {
   state: RecordingState;
   partialText: string;
   finalText: string;
   error: string;
+  stream: MediaStream | null;
   startRecording: () => Promise<void>;
   stopRecording: () => void;
   reset: () => void;
@@ -55,11 +60,15 @@ export interface UseSpeechmaticsReturn {
 
 export function useSpeechmatics(
   language: SpeechLanguage = "en",
+  options: UseSpeechmaticsOptions = {},
 ): UseSpeechmaticsReturn {
+  const { conversationMode = false, onEndOfUtterance } = options;
+
   const [state, setState] = useState<RecordingState>("idle");
   const [partialText, setPartialText] = useState("");
   const [finalText, setFinalText] = useState("");
   const [error, setError] = useState("");
+  const [stream, setStream] = useState<MediaStream | null>(null);
 
   const clientRef = useRef<RealtimeClient | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -68,6 +77,8 @@ export function useSpeechmatics(
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const stateRef = useRef<RecordingState>("idle");
   const stopTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const conversationModeRef = useRef(conversationMode);
+  conversationModeRef.current = conversationMode;
 
   const transcriptAccRef = useRef("");
   useEffect(() => { stateRef.current = state; }, [state]);
@@ -116,6 +127,8 @@ export function useSpeechmatics(
       audioContextRef.current.close().catch(() => {});
       audioContextRef.current = null;
     }
+
+    setStream(null);
   }, []);
 
   useEffect(() => {
@@ -197,6 +210,7 @@ export function useSpeechmatics(
       }
 
       streamRef.current = mediaStream;
+      setStream(mediaStream);
 
       const audioContext = new AudioContext({ sampleRate: TARGET_SAMPLE_RATE });
       audioContextRef.current = audioContext;
@@ -235,6 +249,9 @@ export function useSpeechmatics(
           ...LANGUAGE_CONFIG[language],
           model: "enhanced",
           enable_partials: true,
+          conversation_config: {
+            end_of_utterance_silence_trigger: 0.5,
+          },
         },
       });
 
@@ -251,6 +268,15 @@ export function useSpeechmatics(
           }
         } else if (data.message === "EndOfTranscript") {
           setState("done");
+        } else if (data.message === "EndOfUtterance") {
+          // In conversation mode, Speechmatics detected a pause. Keep
+          // recording — the next utterance will continue accumulating.
+          // Notify the callback so the consumer can trigger research.
+          if (conversationModeRef.current) {
+            onEndOfUtterance?.(transcriptAccRef.current);
+          } else if (stateRef.current === "recording") {
+            setState("done");
+          }
         } else if (data.message === "Error") {
           if (stateRef.current !== "done") {
             setError(`Connection error: ${data.reason || "Unknown error"}`);
@@ -268,7 +294,7 @@ export function useSpeechmatics(
       setState("error");
       cleanup();
     }
-  }, [cleanup]);
+  }, [cleanup, language]);
 
   const stopRecording = useCallback(() => {
     setState("processing");
@@ -332,6 +358,7 @@ export function useSpeechmatics(
     partialText,
     finalText,
     error,
+    stream,
     startRecording,
     stopRecording,
     reset,
@@ -348,12 +375,6 @@ function float32ToPcm16(float32: Float32Array): Int16Array {
   return pcm16;
 }
 
-/**
- * Joins the first alternative content of each transcript result into a
- * space-separated string. Both AddPartialTranscript and AddTranscript carry
- * `results: RecognitionResult[]`, so this uses the SDK's exported types and
- * each `result.alternatives?.[0]?.content` is already typed — no `any` casts.
- */
 function joinTranscript(
   data: AddPartialTranscript | AddTranscript,
 ): string {
