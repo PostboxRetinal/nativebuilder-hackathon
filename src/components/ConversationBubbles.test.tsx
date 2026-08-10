@@ -43,17 +43,30 @@ describe("ConversationBubbles", () => {
     expect(document.querySelector("strong")).toBeTruthy();
   });
 
-  it("renders streaming bubble with animate-pulse class", () => {
+  it("renders streaming bubble with animated dots", () => {
     const messages: ChatMessage[] = [{
       id: "u2",
       role: "user",
-      text: "streaming...",
+      text: "",
       timestamp: Date.now(),
-      isStreaming: true,
+      status: "streaming",
     }];
     render(<ConversationBubbles messages={messages} />);
-    // find element with animate-pulse
-    expect(document.querySelector(".animate-pulse")).toBeTruthy();
+    // Streaming shows 3 bouncing dots (animate-bounce class)
+    expect(document.querySelectorAll(".animate-bounce").length).toBe(3);
+  });
+
+  it("renders sent bubble with checkmark", () => {
+    const messages: ChatMessage[] = [{
+      id: "u3",
+      role: "user",
+      text: "Hello world",
+      timestamp: Date.now(),
+      status: "sent",
+    }];
+    render(<ConversationBubbles messages={messages} />);
+    expect(screen.getByText("Hello world")).toBeInTheDocument();
+    expect(screen.getByText("✓")).toBeInTheDocument();
   });
 
   it("renders multiple messages independently", () => {

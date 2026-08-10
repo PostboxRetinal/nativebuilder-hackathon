@@ -190,37 +190,52 @@ The ConversationModeView SHALL include a model selector that lets the user pick 
 The WaveformVisualizer SHALL call `audioContext.resume()` after creating the AudioContext to ensure the waveform animates immediately after mic opens.
 
 #### Scenario: Waveform animates after mic opens
-- **WHEN** the user starts recording and a `MediaStream` is available
+- **WHEN** the user starts recording and a MediaStream is available
 - **THEN** the canvas renders an animated waveform (not a flat line)
 
 ### Requirement: TTS via Supabase Edge Function proxy
 
 The FishAudioTTSAdapter SHALL invoke the `fish-tts` Supabase Edge Function via `supabase.functions.invoke()`. The Edge Function proxies to Fish Audio REST API (`POST https://api.fish.audio/v1/tts`) using the `FISH_AUDIO_API_KEY` secret stored in Supabase. The API key SHALL NEVER be exposed to the client.
 
-- Request body: `{ text, reference_id?, model? }`
-- Response: `{ audio: base64 }` (mp3)
-- Auth: Supabase anon key (client) + function secret (server)
-- Optional voice cloning via `reference_id`
+#### Scenario: TTS request sent to Edge Function
+- **WHEN** the agent response needs to be spoken
+- **THEN** the adapter calls `supabase.functions.invoke("fish-tts")` with `{ text, reference_id?, model? }` and receives `{ audio: base64 }` (mp3)
+
+#### Scenario: Voice cloning via reference_id
+- **WHEN** a reference_id is configured for voice cloning
+- **THEN** the adapter includes `reference_id` in the request body
 
 ### Requirement: TTS audio playback
 
 The FishAudioTTSAdapter SHALL decode the base64 audio response using `AudioContext.decodeAudioData()` and play it via a `bufferSource` node.
 
-- Stop playback if `isStopped` flag is set before decode
-- Emit error event on decode failure
+#### Scenario: Audio decoded and played
+- **WHEN** the Edge Function returns a valid base64 audio payload
+- **THEN** the adapter decodes it and plays it through the Web Audio API
+
+#### Scenario: Playback stopped mid-decode
+- **WHEN** the user stops playback before audio decode completes
+- **THEN** the adapter skips playback and cleans up the buffer source
+
+#### Scenario: Decode failure handled
+- **WHEN** `decodeAudioData` fails (corrupt or unsupported format)
+- **THEN** the adapter emits an error event and does not crash
 
 ### Requirement: TTS error handling
 
 The FishAudioTTSAdapter SHALL emit error events when the Edge Function returns an error or empty audio.
 
-- Emit `{ message: "Fish Audio: <detail>", code: "TTS_ERROR" }`
+#### Scenario: Edge Function returns error
+- **WHEN** the Edge Function returns a non-2xx response
+- **THEN** the adapter emits `{ message: "Fish Audio: <detail>", code: "TTS_ERROR" }`
+
+#### Scenario: Empty audio response
+- **WHEN** the Edge Function returns success but with empty audio data
+- **THEN** the adapter emits an error event with code `TTS_ERROR`
 
 ### Requirement: Agent TTS playback via Supabase proxy
 
 The ConversationModeView SHALL play agent responses aloud via the `fish-tts` Edge Function proxy. The API key lives exclusively in Supabase secrets.
-
-- Model: `s2.1-pro-free` (free tier)
-- Voice cloning via `reference_id` (optional env var)
 
 #### Scenario: Agent speaks response
 - **WHEN** the research pipeline returns a response
@@ -233,7 +248,6 @@ The ConversationModeView SHALL play agent responses aloud via the `fish-tts` Edg
 ### Requirement: RTVI-style event architecture
 
 The voice agent SHALL use a modular event system with the following contracts:
-
 - STT adapter emits `user-transcript-partial` and `user-transcript-final`
 - TTS adapter emits `bot-tts-text` before synthesis
 - Orchestrator emits `agent-state` on every state change
@@ -250,7 +264,6 @@ The voice agent SHALL use a modular event system with the following contracts:
 ### Requirement: Chat bubble UI
 
 The ConversationModeView SHALL display messages as independent chat bubbles:
-
 - User bubbles: right-aligned, cyan background
 - Agent bubbles: left-aligned, dark slate background with Markdown rendering
 - Streaming bubbles: pulse animation while transcription is incomplete
@@ -271,7 +284,6 @@ The ConversationModeView SHALL display messages as independent chat bubbles:
 ### Requirement: AudioWorklet for PCM capture
 
 The SpeechmaticsAdapter SHALL use `AudioWorkletNode` instead of the deprecated `ScriptProcessorNode` for audio capture and PCM16 conversion.
-
 - Worklet file: `public/pcm-capture-worklet.js`
 - Processor name: `pcm-capture-processor`
 - Worklet receives Float32 audio frames, converts to PCM16 (Int16Array), posts to main thread
@@ -283,7 +295,6 @@ The SpeechmaticsAdapter SHALL use `AudioWorkletNode` instead of the deprecated `
 ### Requirement: Speechmatics WebSocket authentication
 
 The SpeechmaticsAdapter SHALL authenticate using a temporary JWT passed as a query parameter in the WebSocket URL.
-
 - Endpoint: `wss://eu.rt.speechmatics.com/v2/{language}?jwt={token}`
 - Token obtained from Supabase edge function `speechmatics-token`
 - JWT is NOT sent in the StartRecognition message body
@@ -295,7 +306,6 @@ The SpeechmaticsAdapter SHALL authenticate using a temporary JWT passed as a que
 ### Requirement: Microphone toggle
 
 The user SHALL stop the recording stream by pressing the mic button again:
-
 - First press: starts recording (state → listening)
 - Second press while recording: stops (state → idle)
 - Visual indicator: mic icon ↔ stop icon toggle
@@ -307,3 +317,83 @@ The user SHALL stop the recording stream by pressing the mic button again:
 #### Scenario: Visual state change
 - **WHEN** recording is active
 - **THEN** the button shows a stop icon and destructive color; otherwise shows mic icon and cyan color
+
+### Requirement: TTS fallback to Web Speech API
+
+When the Fish Audio Edge Function fails (non-2xx response, network error, or empty audio), the FishAudioTTSAdapter SHALL fallback to the browser's Web Speech API (`speechSynthesis`) to ensure the agent's response is still spoken aloud.
+
+#### Scenario: Fish Audio returns 402
+- **WHEN** the Edge Function returns a 402 Payment Required response
+- **THEN** the adapter catches the error and calls `window.speechSynthesis.speak()` with the same text
+
+#### Scenario: Fish Audio network error
+- **WHEN** the Edge Function invocation throws a network error
+- **THEN** the adapter catches the error and falls back to Web Speech API
+
+#### Scenario: Empty audio response
+- **WHEN** the Edge Function returns success but with empty audio data
+- **THEN** the adapter falls back to Web Speech API
+
+### Requirement: TTS speaking lock
+
+The useVoiceAgent hook SHALL prevent concurrent TTS calls by tracking a speaking lock. If a new TTS request arrives while the previous one is still playing, the new request SHALL be dropped.
+
+#### Scenario: Concurrent TTS requests
+- **WHEN** the user speaks while the agent is still speaking a previous response
+- **THEN** the new TTS request is ignored until the current one completes
+
+### Requirement: Event handler cleanup
+
+The useVoiceAgent hook SHALL register STT and TTS event handlers inside a `useEffect` with a cleanup function that calls `offEvent` to remove handlers on unmount. This prevents duplicate handler registration on re-renders.
+
+#### Scenario: Component re-renders
+- **WHEN** the component re-renders due to state changes
+- **THEN** event handlers are NOT duplicated (cleanup removes old handlers before re-registering)
+
+#### Scenario: Component unmounts
+- **WHEN** the component unmounts
+- **THEN** all event handlers are removed via `offEvent`
+
+### Requirement: Transcript length guard
+
+The ConversationView SHALL reject transcripts shorter than 3 characters before calling the research API. This prevents spam from accidental noise or partial words.
+
+#### Scenario: Short transcript rejected
+- **WHEN** the Speechmatics final transcript is less than 3 characters
+- **THEN** the system returns "I didn't catch that. Could you please repeat?" without calling the research API
+
+### Requirement: Response deduplication
+
+The ConversationModeView SHALL deduplicate consecutive identical responses. If the research pipeline returns the same text twice in a row, the second response SHALL be dropped.
+
+#### Scenario: Duplicate response dropped
+- **WHEN** the research API returns the same response as the previous one
+- **THEN** the second response is not added to the chat and TTS is not triggered
+
+### Requirement: Fish Audio model header
+
+The fish-tts Edge Function SHALL send the model selection as an HTTP header (`model: s2.1-pro-free`) rather than in the request body. Fish Audio's API ignores the `model` field in the body and defaults to the paid `s2.1-pro` model if the header is absent.
+
+#### Scenario: Free tier model used
+- **WHEN** the Edge Function calls `https://api.fish.audio/v1/tts`
+- **THEN** the request includes `model: s2.1-pro-free` as an HTTP header
+
+### Requirement: Research retry with backoff
+
+The research Edge Function SHALL implement retry logic with exponential backoff when AI/ML API returns a 429 Too Many Requests response. The retry delays SHALL be 1s, 2s, and 4s (3 attempts total).
+
+#### Scenario: 429 received from AI/ML API
+- **WHEN** the AI/ML API returns a 429 response
+- **THEN** the Edge Function waits 1s, then 2s, then 4s before retrying (max 3 retries)
+
+#### Scenario: Max retries exceeded
+- **WHEN** all 3 retries fail with 429
+- **THEN** the Edge Function returns the 429 error to the client
+
+### Requirement: Adapter offEvent contract
+
+The STTAdapter and TTSAdapter interfaces SHALL include an `offEvent` method to remove previously registered handlers. This enables proper cleanup in the useVoiceAgent hook.
+
+#### Scenario: Handler removed
+- **WHEN** `offEvent` is called with a type and handler reference
+- **THEN** the handler is removed from the internal handler set and will not be called on future events

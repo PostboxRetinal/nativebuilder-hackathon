@@ -18,14 +18,32 @@ describe("rtvi types", () => {
     expect(msg.role).toBe("user");
   });
 
-  it("ChatMessage.isStreaming is optional", () => {
+  it("ChatMessage.status is optional and accepts streaming/sent/error", () => {
     const msg: ChatMessage = {
       id: "test-2",
       role: "agent",
       text: "response",
       timestamp: Date.now(),
-      isStreaming: true,
+      status: "streaming",
     };
-    expect(msg.isStreaming).toBe(true);
+    expect(msg.status).toBe("streaming");
+
+    const msg2: ChatMessage = {
+      id: "test-3",
+      role: "user",
+      text: "hello",
+      timestamp: Date.now(),
+      status: "sent",
+    };
+    expect(msg2.status).toBe("sent");
+
+    const msg3: ChatMessage = {
+      id: "test-4",
+      role: "agent",
+      text: "",
+      timestamp: Date.now(),
+      status: "error",
+    };
+    expect(msg3.status).toBe("error");
   });
 });

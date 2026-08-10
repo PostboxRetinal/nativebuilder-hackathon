@@ -5,7 +5,7 @@ export interface ChatMessage {
   role: "user" | "agent";
   text: string;
   timestamp: number;
-  isStreaming?: boolean;
+  status?: "streaming" | "sent" | "error";
 }
 
 export interface RTVIEventMap {

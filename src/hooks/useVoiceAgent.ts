@@ -100,7 +100,7 @@ export function useVoiceAgent(
             role: "user",
             text: data.text,
             timestamp: Date.now(),
-            isStreaming: true,
+            status: "streaming",
           },
         ];
       });
@@ -109,7 +109,7 @@ export function useVoiceAgent(
     const handleTranscriptFinal = (data: RTVIEventMap["user-transcript-final"]) => {
       setMessages((prev) =>
         prev.map((m) =>
-          m.id === data.messageId ? { ...m, isStreaming: false } : m,
+          m.id === data.messageId ? { ...m, status: "sent" } : m,
         ),
       );
       currentMessageId.current = null;

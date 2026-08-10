@@ -191,3 +191,77 @@ The user SHALL stop the recording stream by pressing the mic button again:
 #### Scenario: Visual state change
 - **WHEN** recording is active
 - **THEN** the button shows a stop icon and destructive color; otherwise shows mic icon and cyan color
+
+## ADDED Requirements (v0.5.3 — Stability Fixes)
+
+### Requirement: TTS fallback to Web Speech API
+When the Fish Audio Edge Function fails (non-2xx response, network error, or empty audio), the FishAudioTTSAdapter SHALL fallback to the browser's Web Speech API (`speechSynthesis`) to ensure the agent's response is still spoken aloud.
+
+#### Scenario: Fish Audio returns 402
+- **WHEN** the Edge Function returns a 402 Payment Required response
+- **THEN** the adapter catches the error and calls `window.speechSynthesis.speak()` with the same text
+
+#### Scenario: Fish Audio network error
+- **WHEN** the Edge Function invocation throws a network error
+- **THEN** the adapter catches the error and falls back to Web Speech API
+
+#### Scenario: Empty audio response
+- **WHEN** the Edge Function returns success but with empty audio data
+- **THEN** the adapter falls back to Web Speech API
+
+### Requirement: TTS speaking lock
+The useVoiceAgent hook SHALL prevent concurrent TTS calls by tracking a speaking lock. If a new TTS request arrives while the previous one is still playing, the new request SHALL be dropped.
+
+#### Scenario: Concurrent TTS requests
+- **WHEN** the user speaks while the agent is still speaking a previous response
+- **THEN** the new TTS request is ignored until the current one completes
+
+### Requirement: Event handler cleanup
+The useVoiceAgent hook SHALL register STT and TTS event handlers inside a `useEffect` with a cleanup function that calls `offEvent` to remove handlers on unmount. This prevents duplicate handler registration on re-renders.
+
+#### Scenario: Component re-renders
+- **WHEN** the component re-renders due to state changes
+- **THEN** event handlers are NOT duplicated (cleanup removes old handlers before re-registering)
+
+#### Scenario: Component unmounts
+- **WHEN** the component unmounts
+- **THEN** all event handlers are removed via `offEvent`
+
+### Requirement: Transcript length guard
+The ConversationView SHALL reject transcripts shorter than 3 characters before calling the research API. This prevents spam from accidental noise or partial words.
+
+#### Scenario: Short transcript rejected
+- **WHEN** the Speechmatics final transcript is less than 3 characters
+- **THEN** the system returns "I didn't catch that. Could you please repeat?" without calling the research API
+
+### Requirement: Response deduplication
+The ConversationModeView SHALL deduplicate consecutive identical responses. If the research pipeline returns the same text twice in a row, the second response SHALL be dropped.
+
+#### Scenario: Duplicate response dropped
+- **WHEN** the research API returns the same response as the previous one
+- **THEN** the second response is not added to the chat and TTS is not triggered
+
+### Requirement: Fish Audio model header
+The fish-tts Edge Function SHALL send the model selection as an HTTP header (`model: s2.1-pro-free`) rather than in the request body. Fish Audio's API ignores the `model` field in the body and defaults to the paid `s2.1-pro` model if the header is absent.
+
+#### Scenario: Free tier model used
+- **WHEN** the Edge Function calls `https://api.fish.audio/v1/tts`
+- **THEN** the request includes `model: s2.1-pro-free` as an HTTP header
+
+### Requirement: Research retry with backoff
+The research Edge Function SHALL implement retry logic with exponential backoff when AI/ML API returns a 429 Too Many Requests response. The retry delays SHALL be 1s, 2s, and 4s (3 attempts total).
+
+#### Scenario: 429 received from AI/ML API
+- **WHEN** the AI/ML API returns a 429 response
+- **THEN** the Edge Function waits 1s, then 2s, then 4s before retrying (max 3 retries)
+
+#### Scenario: Max retries exceeded
+- **WHEN** all 3 retries fail with 429
+- **THEN** the Edge Function returns the 429 error to the client
+
+### Requirement: Adapter offEvent contract
+The STTAdapter and TTSAdapter interfaces SHALL include an `offEvent` method to remove previously registered handlers. This enables proper cleanup in the useVoiceAgent hook.
+
+#### Scenario: Handler removed
+- **WHEN** `offEvent` is called with a type and handler reference
+- **THEN** the handler is removed from the internal handler set and will not be called on future events
