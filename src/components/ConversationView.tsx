@@ -10,6 +10,7 @@ import ChatComposer from "./chat/ChatComposer";
 import TranscriptionPreview from "./chat/TranscriptionPreview";
 import VoiceTranscriptEditor from "./chat/VoiceTranscriptEditor";
 import ConversationModeView from "./ConversationModeView";
+import { createAdapters } from "../adapters/createAdapters";
 
 function PencilIcon({ className }: { className?: string }) {
   return (
@@ -102,6 +103,8 @@ function ConversationView({ conversationId }: ConversationViewProps): React.Reac
       <ConversationModeView
         onExit={() => setInConversationMode(false)}
         onResearch={handleResearch}
+        sttAdapter={createAdapters().stt}
+        ttsAdapter={createAdapters().tts}
       />
     );
   }

@@ -92,3 +92,67 @@ The WaveformVisualizer SHALL call `audioContext.resume()` after creating the Aud
 #### Scenario: Waveform animates after mic opens
 - **WHEN** the user starts recording and a MediaStream is available
 - **THEN** the canvas renders an animated waveform (not a flat line)
+
+## ADDED Requirements (v0.5.2 — Voice Agent TTS + UI)
+
+### Requirement: Agent TTS playback via Fish Audio
+The ConversationModeView SHALL play agent responses aloud using Fish Audio S2.1 Pro TTS via HTTP streaming and Web Audio API playback.
+- Model: `s2.1-pro-free` (free tier)
+- Auth: `Authorization: Bearer VITE_FISH_AUDIO_API_KEY`
+- Optional voice cloning via `reference_id`
+
+#### Scenario: Agent speaks response
+- **WHEN** the research pipeline returns a response
+- **THEN** the text is sent to Fish Audio TTS and audio plays via Web Audio API
+
+#### Scenario: TTS error handling
+- **WHEN** Fish Audio API returns an error
+- **THEN** the error is displayed in the conversation UI and the agent continues in text-only mode
+
+### Requirement: RTVI-style event architecture
+The voice agent SHALL use a modular event system with the following contracts:
+- STT adapter emits `user-transcript-partial` and `user-transcript-final`
+- TTS adapter emits `bot-tts-text` before synthesis
+- Orchestrator emits `agent-state` on every state change
+- Each utterance creates a new ChatMessage (no concatenation)
+
+#### Scenario: Modular STT swap
+- **WHEN** the STT provider needs to change
+- **THEN** only the STTAdapter implementation changes; UI and orchestrator remain unchanged
+
+#### Scenario: Independent messages
+- **WHEN** the user speaks multiple utterances
+- **THEN** each utterance creates a separate ChatMessage with unique ID
+
+### Requirement: Chat bubble UI
+The ConversationModeView SHALL display messages as independent chat bubbles:
+- User bubbles: right-aligned, cyan background
+- Agent bubbles: left-aligned, dark slate background with Markdown rendering
+- Streaming bubbles: pulse animation while transcription is incomplete
+- Each message is a separate entity (no concatenation)
+
+#### Scenario: User message appears on right
+- **WHEN** the user speaks and transcription finalizes
+- **THEN** a cyan bubble appears on the right side with the transcribed text
+
+#### Scenario: Agent message appears on left with Markdown
+- **WHEN** the research response contains Markdown formatting
+- **THEN** a slate bubble appears on the left with rendered Markdown (bold, code, lists)
+
+#### Scenario: Streaming indicator
+- **WHEN** transcription is in progress (partial results)
+- **THEN** the user bubble shows a pulse animation
+
+### Requirement: Microphone toggle
+The user SHALL stop the recording stream by pressing the mic button again:
+- First press: starts recording (state → listening)
+- Second press while recording: stops (state → idle)
+- Visual indicator: mic icon ↔ stop icon toggle
+
+#### Scenario: Toggle mic off
+- **WHEN** the user presses the mic button while recording
+- **THEN** recording stops and the button shows the mic icon again
+
+#### Scenario: Visual state change
+- **WHEN** recording is active
+- **THEN** the button shows a stop icon and destructive color; otherwise shows mic icon and cyan color

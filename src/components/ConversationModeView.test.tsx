@@ -2,47 +2,48 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ConversationModeView from "./ConversationModeView";
+import type { STTAdapter, TTSAdapter } from "../types/rtvi";
+
+function createMockAdapters(): { stt: STTAdapter; tts: TTSAdapter } {
+  return {
+    stt: {
+      start: vi.fn().mockResolvedValue(undefined),
+      stop: vi.fn(),
+      onEvent: vi.fn(),
+    },
+    tts: {
+      speak: vi.fn().mockResolvedValue(undefined),
+      stop: vi.fn(),
+      onEvent: vi.fn(),
+    },
+  };
+}
 
 const mockResearch = vi.fn().mockResolvedValue("agent reply");
 
 describe("ConversationModeView", () => {
   it("renders the header with title", () => {
+    const adapters = createMockAdapters();
     render(
-      <ConversationModeView onExit={() => {}} onResearch={mockResearch} />,
+      <ConversationModeView onExit={() => {}} onResearch={mockResearch} sttAdapter={adapters.stt} ttsAdapter={adapters.tts} />,
     );
     expect(screen.getByText("Conversation Mode")).toBeInTheDocument();
   });
 
   it("renders the back button", () => {
+    const adapters = createMockAdapters();
     render(
-      <ConversationModeView onExit={() => {}} onResearch={mockResearch} />,
+      <ConversationModeView onExit={() => {}} onResearch={mockResearch} sttAdapter={adapters.stt} ttsAdapter={adapters.tts} />,
     );
     expect(
       screen.getByRole("button", { name: /exit conversation mode/i }),
     ).toBeInTheDocument();
   });
 
-  it("renders both transcription panels", () => {
-    render(
-      <ConversationModeView onExit={() => {}} onResearch={mockResearch} />,
-    );
-    expect(screen.getByText("You")).toBeInTheDocument();
-    expect(screen.getByText("Agent")).toBeInTheDocument();
-  });
-
-  it("renders initial placeholder text", () => {
-    render(
-      <ConversationModeView onExit={() => {}} onResearch={mockResearch} />,
-    );
-    expect(
-      screen.getByText(/tap the microphone to start speaking/i),
-    ).toBeInTheDocument();
-    expect(screen.getByText("Waiting...")).toBeInTheDocument();
-  });
-
   it("renders the mic button to start recording", () => {
+    const adapters = createMockAdapters();
     render(
-      <ConversationModeView onExit={() => {}} onResearch={mockResearch} />,
+      <ConversationModeView onExit={() => {}} onResearch={mockResearch} sttAdapter={adapters.stt} ttsAdapter={adapters.tts} />,
     );
     expect(
       screen.getByRole("button", { name: /start recording/i }),
@@ -50,10 +51,11 @@ describe("ConversationModeView", () => {
   });
 
   it("calls onExit when back button is clicked", async () => {
+    const adapters = createMockAdapters();
     const onExit = vi.fn();
     const user = userEvent.setup();
     render(
-      <ConversationModeView onExit={onExit} onResearch={mockResearch} />,
+      <ConversationModeView onExit={onExit} onResearch={mockResearch} sttAdapter={adapters.stt} ttsAdapter={adapters.tts} />,
     );
     await user.click(
       screen.getByRole("button", { name: /exit conversation mode/i }),
@@ -61,30 +63,28 @@ describe("ConversationModeView", () => {
     expect(onExit).toHaveBeenCalledTimes(1);
   });
 
-  it("shows stop button when recording", async () => {
+  it("shows stop button when recording (toggle)", async () => {
+    const adapters = createMockAdapters();
     const user = userEvent.setup();
     render(
-      <ConversationModeView onExit={() => {}} onResearch={mockResearch} />,
+      <ConversationModeView onExit={() => {}} onResearch={mockResearch} sttAdapter={adapters.stt} ttsAdapter={adapters.tts} />,
     );
+    // Click mic to start
     await user.click(
       screen.getByRole("button", { name: /start recording/i }),
     );
+    // Now should show stop
     expect(
       screen.getByRole("button", { name: /stop recording/i }),
     ).toBeInTheDocument();
   });
 
-  it("displays user text after speaking", async () => {
-    const user = userEvent.setup();
+  it("renders ConversationBubbles component", () => {
+    const adapters = createMockAdapters();
     render(
-      <ConversationModeView onExit={() => {}} onResearch={mockResearch} />,
+      <ConversationModeView onExit={() => {}} onResearch={mockResearch} sttAdapter={adapters.stt} ttsAdapter={adapters.tts} />,
     );
-    await user.click(
-      screen.getByRole("button", { name: /start recording/i }),
-    );
-    await user.click(
-      screen.getByRole("button", { name: /stop recording/i }),
-    );
-    expect(screen.getByText("Tap the mic to start")).toBeInTheDocument();
+    // ConversationBubbles renders "No messages yet" when empty
+    expect(screen.getByText("No messages yet")).toBeInTheDocument();
   });
 });
