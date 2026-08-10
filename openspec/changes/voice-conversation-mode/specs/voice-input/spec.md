@@ -153,6 +153,16 @@ The SpeechmaticsAdapter SHALL use `AudioWorkletNode` instead of the deprecated `
 - **WHEN** the user starts recording in conversation mode
 - **THEN** the console shows no ScriptProcessorNode deprecation warning
 
+### Requirement: Speechmatics WebSocket authentication
+The SpeechmaticsAdapter SHALL authenticate using a temporary JWT passed as a query parameter in the WebSocket URL.
+- Endpoint: `wss://eu.rt.speechmatics.com/v2/{language}?jwt={token}`
+- Token obtained from Supabase edge function `speechmatics-token`
+- JWT is NOT sent in the StartRecognition message body
+
+#### Scenario: Connection authorized
+- **WHEN** the adapter connects to Speechmatics with a valid JWT in the URL
+- **THEN** the WebSocket connects successfully (no "Not Authorized" error)
+
 ### Requirement: Microphone toggle
 The user SHALL stop the recording stream by pressing the mic button again:
 - First press: starts recording (state → listening)

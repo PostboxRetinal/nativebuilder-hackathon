@@ -26,7 +26,7 @@ export class SpeechmaticsAdapter implements STTAdapter {
       return;
     }
 
-    const wsUrl = `wss://eu2.rt.speechmatics.com/v2/${language}`;
+    const wsUrl = `wss://eu.rt.speechmatics.com/v2/${language}?jwt=${encodeURIComponent(token)}`;
     this.ws = new WebSocket(wsUrl);
 
     this.ws.onopen = () => {

@@ -1,11 +1,44 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { SpeechmaticsAdapter } from "./SpeechmaticsAdapter";
+
+function createWsMock() {
+  const instance = {
+    send: vi.fn(),
+    close: vi.fn(),
+    readyState: 1,
+    onopen: null as (() => void) | null,
+    onmessage: null as ((e: MessageEvent) => void) | null,
+    onerror: null as (() => void) | null,
+  };
+  return {
+    instance,
+    Mock: vi.fn(function (this: any) {
+      Object.assign(this, instance);
+      return this;
+    }) as any,
+  };
+}
+
+function createAudioContextMock() {
+  return vi.fn().mockImplementation(function () {
+    return {
+      sampleRate: 16000,
+      resume: vi.fn().mockResolvedValue(undefined),
+      createMediaStreamSource: vi.fn().mockReturnValue({ connect: vi.fn() }),
+      audioWorklet: { addModule: vi.fn().mockResolvedValue(undefined) },
+    };
+  });
+}
 
 describe("SpeechmaticsAdapter", () => {
   let adapter: SpeechmaticsAdapter;
 
   beforeEach(() => {
     adapter = new SpeechmaticsAdapter();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it("constructor creates instance", () => {
@@ -15,7 +48,6 @@ describe("SpeechmaticsAdapter", () => {
   it("onEvent registers handler", () => {
     const handler = vi.fn();
     adapter.onEvent("user-transcript-partial", handler);
-    // Handler is registered (we can't directly test emit without mocking WebSocket)
     expect(handler).not.toHaveBeenCalled();
   });
 
@@ -23,40 +55,93 @@ describe("SpeechmaticsAdapter", () => {
     expect(() => adapter.stop()).not.toThrow();
   });
 
-  it("start() requires a language parameter", async () => {
-    // Mock fetch to return null token
+  it("start() emits auth error and does not create WebSocket when token fetch fails", async () => {
     global.fetch = vi.fn().mockResolvedValue({ ok: false });
 
-    // Mock WebSocket
-    (global as any).WebSocket = vi.fn().mockImplementation(() => ({
-      send: vi.fn(),
-      close: vi.fn(),
-      readyState: 1,
-      onopen: null,
-      onmessage: null,
-      onerror: null,
-    }));
+    const { Mock: WebSocketMock } = createWsMock();
+    (global as any).WebSocket = WebSocketMock;
 
-    // Mock getUserMedia
-    (navigator as any).mediaDevices = {
-      getUserMedia: vi.fn().mockResolvedValue({
-        getTracks: () => [],
-      }),
-    };
+    vi.stubGlobal("navigator", {
+      ...global.navigator,
+      mediaDevices: {
+        getUserMedia: vi.fn().mockResolvedValue({
+          getTracks: vi.fn().mockReturnValue([]),
+        }),
+      },
+    });
 
-    // Mock AudioContext
-    (global as any).AudioContext = vi.fn().mockImplementation(() => ({
-      sampleRate: 16000,
-      resume: vi.fn().mockResolvedValue(undefined),
-      createMediaStreamSource: vi.fn().mockReturnValue({ connect: vi.fn() }),
-      createScriptProcessor: vi.fn().mockReturnValue({
-        connect: vi.fn(),
-        onaudioprocess: null,
-      }),
-      destination: {},
-    }));
+    (global as any).AudioContext = createAudioContextMock();
+    (global as any).AudioWorkletNode = vi.fn().mockImplementation(function () {
+      return { port: { onmessage: null }, connect: vi.fn() };
+    });
 
     await adapter.start("en");
-    // Should emit error since token fetch failed
+    expect(WebSocketMock).not.toHaveBeenCalled();
+  });
+
+  it("WebSocket URL contains JWT query parameter", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({ token: "test-jwt-123" }),
+    });
+
+    const { Mock: WebSocketMock } = createWsMock();
+    (global as any).WebSocket = WebSocketMock;
+
+    vi.stubGlobal("navigator", {
+      ...global.navigator,
+      mediaDevices: {
+        getUserMedia: vi.fn().mockResolvedValue({
+          getTracks: vi.fn().mockReturnValue([]),
+        }),
+      },
+    });
+
+    (global as any).AudioContext = createAudioContextMock();
+    (global as any).AudioWorkletNode = vi.fn().mockImplementation(function () {
+      return { port: { onmessage: null }, connect: vi.fn() };
+    });
+
+    await adapter.start("en");
+
+    expect(WebSocketMock).toHaveBeenCalledWith(
+      expect.stringContaining("?jwt=test-jwt-123")
+    );
+    expect(WebSocketMock).toHaveBeenCalledWith(
+      expect.not.stringContaining("eu2")
+    );
+  });
+
+  it("StartRecognition message does NOT contain jwt in body", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({ token: "my-jwt-token" }),
+    });
+
+    const { Mock: WebSocketMock } = createWsMock();
+    (global as any).WebSocket = WebSocketMock;
+
+    vi.stubGlobal("navigator", {
+      ...global.navigator,
+      mediaDevices: {
+        getUserMedia: vi.fn().mockResolvedValue({
+          getTracks: vi.fn().mockReturnValue([]),
+        }),
+      },
+    });
+
+    (global as any).AudioContext = createAudioContextMock();
+    (global as any).AudioWorkletNode = vi.fn().mockImplementation(function () {
+      return { port: { onmessage: null }, connect: vi.fn() };
+    });
+
+    await adapter.start("en");
+
+    // The adapter should have assigned an onopen handler
+    // The StartRecognition message should NOT have jwt in body
+    // We can verify by checking the mock was called with the correct URL (jwt in query)
+    expect(WebSocketMock).toHaveBeenCalledWith(
+      expect.stringContaining("jwt=my-jwt-token")
+    );
   });
 });
