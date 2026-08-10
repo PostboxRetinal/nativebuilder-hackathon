@@ -13,6 +13,10 @@ export class SpeechmaticsAdapter implements STTAdapter {
     this.handlers.get(type)!.add(handler);
   }
 
+  offEvent<T extends RTVIEventType>(type: T, handler: Handler<T>) {
+    this.handlers.get(type)?.delete(handler);
+  }
+
   private emit<T extends RTVIEventType>(type: T, data: RTVIEventMap[T]) {
     this.handlers.get(type)?.forEach((h) => h(data));
   }

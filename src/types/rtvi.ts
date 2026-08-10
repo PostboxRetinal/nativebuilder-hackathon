@@ -23,10 +23,12 @@ export interface STTAdapter {
   start(language: string): Promise<void>;
   stop(): void;
   onEvent: <T extends RTVIEventType>(type: T, handler: (data: RTVIEventMap[T]) => void) => void;
+  offEvent: <T extends RTVIEventType>(type: T, handler: (data: RTVIEventMap[T]) => void) => void;
 }
 
 export interface TTSAdapter {
   speak(text: string): Promise<void>;
   stop(): void;
   onEvent: <T extends RTVIEventType>(type: T, handler: (data: RTVIEventMap[T]) => void) => void;
+  offEvent: <T extends RTVIEventType>(type: T, handler: (data: RTVIEventMap[T]) => void) => void;
 }

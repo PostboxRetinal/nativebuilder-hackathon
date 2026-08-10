@@ -12,6 +12,9 @@ function createMockSTTAdapter(): STTAdapter & { emit: (type: string, data: any) 
       if (!handlers.has(type)) handlers.set(type, new Set());
       handlers.get(type)!.add(handler);
     },
+    offEvent: (type: string, handler: Function) => {
+      handlers.get(type)?.delete(handler);
+    },
     emit: (type: string, data: any) => {
       handlers.get(type)?.forEach((h) => h(data));
     },
@@ -26,6 +29,9 @@ function createMockTTSAdapter(): TTSAdapter {
     onEvent: (type: string, handler: Function) => {
       if (!handlers.has(type)) handlers.set(type, new Set());
       handlers.get(type)!.add(handler);
+    },
+    offEvent: (type: string, handler: Function) => {
+      handlers.get(type)?.delete(handler);
     },
   };
 }

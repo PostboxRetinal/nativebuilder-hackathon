@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import type {
   AgentState,
   ChatMessage,
@@ -50,6 +50,7 @@ export function useVoiceAgent(
 
   const handlers = useRef<Map<RTVIEventType, Set<Handler<any>>>>(new Map());
   const currentMessageId = useRef<string | null>(null);
+  const isSpeakingRef = useRef(false);
 
   const emit = useCallback(
     <T extends RTVIEventType>(type: T, data: RTVIEventMap[T]) => {
@@ -83,49 +84,61 @@ export function useVoiceAgent(
     [emit],
   );
 
-  // Wire up STT adapter events
-  sttAdapter.onEvent("user-transcript-partial", (data) => {
-    const msgId = data.messageId;
-    setMessages((prev) => {
-      const existing = prev.find((m) => m.id === msgId);
-      if (existing) {
-        return prev.map((m) => (m.id === msgId ? { ...m, text: data.text } : m));
-      }
-      return [
-        ...prev,
-        {
-          id: msgId,
-          role: "user",
-          text: data.text,
-          timestamp: Date.now(),
-          isStreaming: true,
-        },
-      ];
-    });
-  });
+  // Register STT/TTS event handlers ONCE via useEffect
+  useEffect(() => {
+    const handleTranscriptPartial = (data: RTVIEventMap["user-transcript-partial"]) => {
+      const msgId = data.messageId;
+      setMessages((prev) => {
+        const existing = prev.find((m) => m.id === msgId);
+        if (existing) {
+          return prev.map((m) => (m.id === msgId ? { ...m, text: data.text } : m));
+        }
+        return [
+          ...prev,
+          {
+            id: msgId,
+            role: "user",
+            text: data.text,
+            timestamp: Date.now(),
+            isStreaming: true,
+          },
+        ];
+      });
+    };
 
-  sttAdapter.onEvent("user-transcript-final", (data) => {
-    setMessages((prev) =>
-      prev.map((m) =>
-        m.id === data.messageId ? { ...m, isStreaming: false } : m,
-      ),
-    );
-    currentMessageId.current = null;
-    onUserTranscriptFinal(data.text);
-  });
+    const handleTranscriptFinal = (data: RTVIEventMap["user-transcript-final"]) => {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === data.messageId ? { ...m, isStreaming: false } : m,
+        ),
+      );
+      currentMessageId.current = null;
+      onUserTranscriptFinal(data.text);
+    };
 
-  sttAdapter.onEvent("error", (data) => {
-    setError(data.message);
-  });
+    const handleSTTError = (data: RTVIEventMap["error"]) => {
+      setError(data.message);
+    };
 
-  // Wire up TTS adapter events
-  ttsAdapter.onEvent("error", (data) => {
-    setError(data.message);
-  });
+    const handleTTSError = (data: RTVIEventMap["error"]) => {
+      setError(data.message);
+    };
+
+    sttAdapter.onEvent("user-transcript-partial", handleTranscriptPartial);
+    sttAdapter.onEvent("user-transcript-final", handleTranscriptFinal);
+    sttAdapter.onEvent("error", handleSTTError);
+    ttsAdapter.onEvent("error", handleTTSError);
+
+    return () => {
+      sttAdapter.offEvent?.("user-transcript-partial", handleTranscriptPartial);
+      sttAdapter.offEvent?.("user-transcript-final", handleTranscriptFinal);
+      sttAdapter.offEvent?.("error", handleSTTError);
+      ttsAdapter.offEvent?.("error", handleTTSError);
+    };
+  }, [sttAdapter, ttsAdapter, onUserTranscriptFinal]);
 
   const startListening = useCallback(async () => {
     if (state === "listening") {
-      // Toggle off
       stopListening();
       return;
     }
@@ -143,10 +156,12 @@ export function useVoiceAgent(
   const speak = useCallback(
     async (text: string) => {
       if (!text.trim()) return;
+      if (isSpeakingRef.current) return;
+
+      isSpeakingRef.current = true;
       setError(null);
       setStateAndEmit("speaking");
 
-      // Add agent message
       const agentMsg: ChatMessage = {
         id: crypto.randomUUID(),
         role: "agent",
@@ -161,6 +176,7 @@ export function useVoiceAgent(
         const msg = err instanceof Error ? err.message : "TTS failed";
         setError(msg);
       } finally {
+        isSpeakingRef.current = false;
         setStateAndEmit("idle");
       }
     },
@@ -169,6 +185,7 @@ export function useVoiceAgent(
 
   const stopSpeaking = useCallback(() => {
     ttsAdapter.stop();
+    isSpeakingRef.current = false;
     setStateAndEmit("idle");
   }, [ttsAdapter, setStateAndEmit]);
 

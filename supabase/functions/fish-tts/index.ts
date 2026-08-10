@@ -43,16 +43,19 @@ Deno.serve(async (req: Request) => {
     });
   }
 
+  const selectedModel = body.model ?? "s2.1-pro-free";
+
   const response = await fetch("https://api.fish.audio/v1/tts", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${fishKey}`,
       "Content-Type": "application/json",
+      "model": selectedModel,
     },
     body: JSON.stringify({
       text: body.text.slice(0, 500),
       reference_id: body.reference_id ?? undefined,
-      model: body.model ?? "s2.1-pro-free",
+      model: selectedModel,
       format: "mp3",
       latency: "balanced",
     }),
@@ -61,7 +64,7 @@ Deno.serve(async (req: Request) => {
   if (!response.ok) {
     const errText = await response.text();
     return new Response(
-      JSON.stringify({ error: `Fish Audio error: ${errText.slice(0, 200)}` }),
+      JSON.stringify({ error: `Fish Audio error (${response.status}): ${errText.slice(0, 200)}` }),
       { status: response.status, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } },
     );
   }

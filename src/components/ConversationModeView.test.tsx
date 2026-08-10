@@ -10,11 +10,13 @@ function createMockAdapters(): { stt: STTAdapter; tts: TTSAdapter } {
       start: vi.fn().mockResolvedValue(undefined),
       stop: vi.fn(),
       onEvent: vi.fn(),
+      offEvent: vi.fn(),
     },
     tts: {
       speak: vi.fn().mockResolvedValue(undefined),
       stop: vi.fn(),
       onEvent: vi.fn(),
+      offEvent: vi.fn(),
     },
   };
 }

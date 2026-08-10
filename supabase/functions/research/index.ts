@@ -7,6 +7,8 @@ const CORS_HEADERS = {
 };
 
 const MAX_ITERATIONS = 5;
+const MAX_RETRIES = 3;
+const INITIAL_RETRY_DELAY_MS = 1000;
 const AIML_API_URL = "https://api.aimlapi.com/v1/chat/completions";
 const BRIGHTDATA_API_URL = "https://api.brightdata.com/request";
 const DEFAULT_MODEL = "openai/gpt-5.6-luna";
@@ -94,6 +96,31 @@ interface ResearchResponse {
   answer: string;
   sources: { title: string; url: string }[];
   iterations: number;
+}
+
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  maxRetries: number = MAX_RETRIES,
+): Promise<Response> {
+  let lastResponse: Response | undefined;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const response = await fetch(url, options);
+
+    if (response.status !== 429) {
+      return response;
+    }
+
+    lastResponse = response;
+
+    if (attempt < maxRetries) {
+      const delay = INITIAL_RETRY_DELAY_MS * Math.pow(2, attempt);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+
+  return lastResponse!;
 }
 
 Deno.serve(async (req: Request) => {
@@ -185,7 +212,7 @@ async function runAgentLoop(
   const fetchedUrls: Set<string> = new Set();
 
   for (let i = 0; i < MAX_ITERATIONS; i++) {
-    const response = await fetch(AIML_API_URL, {
+    const response = await fetchWithRetry(AIML_API_URL, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${aimlKey}`,
@@ -278,7 +305,7 @@ async function runAgentLoop(
       "Please provide your best answer now based on the information gathered so far. Include a Sources section.",
   });
 
-  const finalResp = await fetch(AIML_API_URL, {
+  const finalResp = await fetchWithRetry(AIML_API_URL, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${aimlKey}`,
@@ -309,7 +336,7 @@ async function searchWeb(apiKey: string, query: string): Promise<string> {
   const encodedQuery = encodeURIComponent(query);
   const url = `https://www.google.com/search?q=${encodedQuery}`;
 
-  const response = await fetch(BRIGHTDATA_API_URL, {
+  const response = await fetchWithRetry(BRIGHTDATA_API_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -331,7 +358,7 @@ async function searchWeb(apiKey: string, query: string): Promise<string> {
 }
 
 async function fetchPage(apiKey: string, url: string): Promise<string> {
-  const response = await fetch(BRIGHTDATA_API_URL, {
+  const response = await fetchWithRetry(BRIGHTDATA_API_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
