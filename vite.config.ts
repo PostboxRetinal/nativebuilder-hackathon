@@ -26,6 +26,7 @@ export default defineConfig({
           'https://vpditxpomxixcijriyzg.supabase.co',
           'wss://vpditxpomxixcijriyzg.supabase.co',
           'wss://eu2.rt.speechmatics.com',
+          'wss://api.fish.audio',
         ],
         scriptSrcElem: [self],
         styleSrcElem: [self, unsafeInline, 'https://fonts.googleapis.com'],

@@ -47,8 +47,10 @@ export class SpeechmaticsAdapter implements STTAdapter {
         const text = this.joinTranscript(data);
         this.emit("user-transcript-partial", { text, messageId: this.currentMessageId! });
       } else if (data.message === "AddTranscript") {
-        const text = this.joinTranscript(data);
-        this.emit("user-transcript-final", { text, messageId: this.currentMessageId! });
+        const text = this.joinTranscript(data).trim();
+        if (text.length > 0) {
+          this.emit("user-transcript-final", { text, messageId: this.currentMessageId! });
+        }
       } else if (data.message === "EndOfTranscript") {
         this.stop();
       } else if (data.message === "Error") {
