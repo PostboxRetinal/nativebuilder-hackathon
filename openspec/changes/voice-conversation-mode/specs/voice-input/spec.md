@@ -265,3 +265,20 @@ The STTAdapter and TTSAdapter interfaces SHALL include an `offEvent` method to r
 #### Scenario: Handler removed
 - **WHEN** `offEvent` is called with a type and handler reference
 - **THEN** the handler is removed from the internal handler set and will not be called on future events
+
+## ADDED Requirements (v0.5.4 — Orb Interaction Fix)
+
+### Requirement: Orb pointer-events on decorative elements
+The ConversationOrb component SHALL apply `pointer-events-none` to all decorative child elements (animated ping spans, blur overlay) so that click events always reach the parent `<button>` element. Decorative elements with `pointer-events: auto` (default) intercept clicks and prevent the button's onClick handler from firing when the click lands on a span that extends outside the button's bounds.
+
+#### Scenario: Click on orb center starts conversation
+- **WHEN** the user clicks the center of the orb (where the blur overlay is)
+- **THEN** the click passes through to the button and `onClick` fires
+
+#### Scenario: Click on orb edge starts conversation
+- **WHEN** the user clicks the edge of the orb (where the animated ping spans extend beyond the button)
+- **THEN** the click passes through the span to the button and `onClick` fires
+
+#### Scenario: Orb disabled during processing
+- **WHEN** the orb is in `processing` state
+- **THEN** the button is disabled and `onClick` does not fire regardless of pointer-events

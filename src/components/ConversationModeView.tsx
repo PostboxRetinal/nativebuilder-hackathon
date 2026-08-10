@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import type { STTAdapter, TTSAdapter } from "../types/rtvi";
 import { useVoiceAgent } from "../hooks/useVoiceAgent";
 import { ConversationBubbles } from "./ConversationBubbles";
@@ -27,10 +27,12 @@ export default function ConversationModeView({
     messages,
     isListening,
     isSpeaking,
+    isConnecting,
     error,
     startListening,
     stopListening,
     speak,
+    stopSpeaking,
   } = useVoiceAgent({
     sttAdapter,
     ttsAdapter,
@@ -52,6 +54,13 @@ export default function ConversationModeView({
   });
 
   const isProcessing = state === "processing";
+
+  const toggleConversation = useCallback(() => {
+    if (state === "speaking") { stopSpeaking(); stopListening(); }
+    else if (state === "listening") { stopListening(); }
+    else if (state === "processing") { /* noop */ }
+    else { startListening(); }
+  }, [state, startListening, stopListening, stopSpeaking]);
 
   return (
     <div className="flex h-full flex-col bg-background text-foreground">
@@ -77,11 +86,15 @@ export default function ConversationModeView({
 
       <footer className="border-t border-border bg-surface px-4 py-3">
         <div className="flex flex-col items-center gap-2">
-          <ConversationOrb state={isSpeaking ? "speaking" : isListening ? "listening" : isProcessing ? "processing" : "idle"} />
+          <ConversationOrb
+            state={isSpeaking ? "speaking" : isListening ? "listening" : isProcessing ? "processing" : "idle"}
+            onClick={toggleConversation}
+            isConnecting={isConnecting}
+          />
           <div className="flex items-center justify-center gap-3">
             <button
               type="button"
-              onClick={isSpeaking ? () => { stopListening(); } : isListening ? stopListening : startListening}
+              onClick={toggleConversation}
               disabled={isProcessing}
               aria-label={isListening ? "Stop recording" : "Start recording"}
               className={`flex h-12 w-12 items-center justify-center rounded-full shadow-lg transition-transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 ${

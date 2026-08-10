@@ -214,6 +214,7 @@ function ConversationView({ conversationId }: ConversationViewProps): React.Reac
                 onStart={voice.startRecording}
                 onStop={voice.stopRecording}
                 onRetry={voice.startRecording}
+                onEnterConversationMode={() => setInConversationMode(true)}
               />
             </div>
           </div>

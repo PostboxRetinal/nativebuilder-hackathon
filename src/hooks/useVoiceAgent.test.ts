@@ -101,7 +101,7 @@ describe("useVoiceAgent", () => {
     expect(sttAdapter.stop).toHaveBeenCalled();
   });
 
-  it("toggle: calling startListening twice stops the mic", async () => {
+  it("toggle: calling startListening while listening stops via stopListening", async () => {
     const { result } = renderHook(() =>
       useVoiceAgent({
         sttAdapter,
@@ -115,8 +115,8 @@ describe("useVoiceAgent", () => {
     });
     expect(result.current.isListening).toBe(true);
 
-    await act(async () => {
-      await result.current.startListening();
+    act(() => {
+      result.current.stopListening();
     });
     expect(result.current.isListening).toBe(false);
   });

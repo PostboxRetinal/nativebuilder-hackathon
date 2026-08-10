@@ -20,6 +20,7 @@ export interface UseVoiceAgentReturn {
   messages: ChatMessage[];
   isListening: boolean;
   isSpeaking: boolean;
+  isConnecting: boolean;
   error: string | null;
   startListening: () => Promise<void>;
   stopListening: () => void;
@@ -47,9 +48,11 @@ export function useVoiceAgent(
   const [state, setState] = useState<AgentState>("idle");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
 
   const handlers = useRef<Map<RTVIEventType, Set<Handler<any>>>>(new Map());
   const isSpeakingRef = useRef(false);
+  const isConnectingRef = useRef(false);
 
   const emit = useCallback(
     <T extends RTVIEventType>(type: T, data: RTVIEventMap[T]) => {
@@ -149,20 +152,30 @@ export function useVoiceAgent(
   }, [sttAdapter, ttsAdapter, onUserTranscriptFinal]);
 
   const startListening = useCallback(async () => {
-    if (state === "listening") {
-      stopListening();
-      return;
-    }
+    if (isConnectingRef.current) return;
     setError(null);
-    setStateAndEmit("listening");
-    await sttAdapter.start(language);
-  }, [state, sttAdapter, language, setStateAndEmit]);
+    setIsConnecting(true);
+    isConnectingRef.current = true;
+    try {
+      setStateAndEmit("listening");
+      await sttAdapter.start(language);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "STT failed";
+      setError(msg);
+      setStateAndEmit("idle");
+    } finally {
+      isConnectingRef.current = false;
+      setIsConnecting(false);
+    }
+  }, [sttAdapter, language, setStateAndEmit]);
 
   const stopListening = useCallback(() => {
     sttAdapter.stop();
     // Also stop TTS if playing
     ttsAdapter.stop();
     isSpeakingRef.current = false;
+    isConnectingRef.current = false;
+    setIsConnecting(false);
     setStateAndEmit("idle");
   }, [sttAdapter, setStateAndEmit]);
 
@@ -214,6 +227,8 @@ export function useVoiceAgent(
   const stopSpeaking = useCallback(() => {
     ttsAdapter.stop();
     isSpeakingRef.current = false;
+    isConnectingRef.current = false;
+    setIsConnecting(false);
     setStateAndEmit("idle");
   }, [ttsAdapter, setStateAndEmit]);
 
@@ -226,6 +241,7 @@ export function useVoiceAgent(
     messages,
     isListening: state === "listening",
     isSpeaking: state === "speaking",
+    isConnecting,
     error,
     startListening,
     stopListening,
