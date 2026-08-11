@@ -5,12 +5,11 @@ type Handler<T extends RTVIEventType> = (data: RTVIEventMap[T]) => void;
 
 export class FishAudioTTSAdapter implements TTSAdapter {
   private handlers: Map<RTVIEventType, Set<Handler<any>>> = new Map();
-  private referenceId?: string;
   private audioCtx: AudioContext | null = null;
   private isStopped = false;
 
-  constructor(_apiKey: string, referenceId?: string) {
-    this.referenceId = referenceId;
+  constructor(_apiKey: string) {
+    // reference_id is now read from Deno.env.get() in the Edge Function
   }
 
   onEvent<T extends RTVIEventType>(type: T, handler: Handler<T>) {
@@ -26,56 +25,27 @@ export class FishAudioTTSAdapter implements TTSAdapter {
     this.handlers.get(type)?.forEach((h) => h(data));
   }
 
-  private fallbackSpeak(text: string): Promise<void> {
-    return new Promise((resolve) => {
-      if (!("speechSynthesis" in window)) {
-        resolve();
-        return;
-      }
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.onend = () => resolve();
-      utterance.onerror = () => resolve();
-      window.speechSynthesis.speak(utterance);
-    });
-  }
-
   async speak(text: string): Promise<void> {
     if (!text.trim()) return;
     this.isStopped = false;
 
     this.emit("bot-tts-text", { text });
 
-    try {
-      const { data, error } = await supabase.functions.invoke("fish-tts", {
-        body: { text, reference_id: this.referenceId },
-      });
+    const { data, error } = await supabase.functions.invoke("fish-tts", {
+      body: { text },
+    });
 
-      if (error) {
-        console.warn("[FishAudio] Edge Function failed, using fallback TTS:", error.message);
-        this.emit("error", { message: `Fish Audio: ${error.message}`, code: "TTS_FALLBACK" });
-        if (!this.isStopped) {
-          await this.fallbackSpeak(text);
-        }
-        return;
-      }
-
-      const audio = (data as { audio?: string })?.audio;
-      if (!audio) {
-        console.warn("[FishAudio] Empty response, using fallback TTS");
-        if (!this.isStopped) {
-          await this.fallbackSpeak(text);
-        }
-        return;
-      }
-
-      if (this.isStopped) return;
-      await this.playBase64(audio);
-    } catch (err) {
-      console.warn("[FishAudio] Unexpected error, using fallback TTS:", err);
-      if (!this.isStopped) {
-        await this.fallbackSpeak(text);
-      }
+    if (error) {
+      throw new Error(`Fish Audio: ${error.message}`);
     }
+
+    const audio = (data as { audio?: string })?.audio;
+    if (!audio) {
+      throw new Error("Fish Audio: Empty response from server");
+    }
+
+    if (this.isStopped) return;
+    await this.playBase64(audio);
   }
 
   private async playBase64(base64: string): Promise<void> {

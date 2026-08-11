@@ -24,10 +24,12 @@ function createMockAdapters(): { stt: STTAdapter; tts: TTSAdapter } {
 const mockResearch = vi.fn().mockResolvedValue("agent reply");
 
 describe("ConversationModeView", () => {
+  const mockConversationId = "test-conversation-123";
+
   it("renders the header with title", () => {
     const adapters = createMockAdapters();
     render(
-      <ConversationModeView onExit={() => {}} onResearch={mockResearch} sttAdapter={adapters.stt} ttsAdapter={adapters.tts} />,
+      <ConversationModeView conversationId={mockConversationId} onExit={() => {}} onResearch={mockResearch} sttAdapter={adapters.stt} ttsAdapter={adapters.tts} />,
     );
     expect(screen.getByText("Conversation Mode")).toBeInTheDocument();
   });
@@ -35,7 +37,7 @@ describe("ConversationModeView", () => {
   it("renders the back button", () => {
     const adapters = createMockAdapters();
     render(
-      <ConversationModeView onExit={() => {}} onResearch={mockResearch} sttAdapter={adapters.stt} ttsAdapter={adapters.tts} />,
+      <ConversationModeView conversationId={mockConversationId} onExit={() => {}} onResearch={mockResearch} sttAdapter={adapters.stt} ttsAdapter={adapters.tts} />,
     );
     expect(
       screen.getByRole("button", { name: /exit conversation mode/i }),
@@ -45,7 +47,7 @@ describe("ConversationModeView", () => {
   it("renders the orb button to start conversation", () => {
     const adapters = createMockAdapters();
     render(
-      <ConversationModeView onExit={() => {}} onResearch={mockResearch} sttAdapter={adapters.stt} ttsAdapter={adapters.tts} />,
+      <ConversationModeView conversationId={mockConversationId} onExit={() => {}} onResearch={mockResearch} sttAdapter={adapters.stt} ttsAdapter={adapters.tts} />,
     );
     expect(
       screen.getByRole("button", { name: /start conversation/i }),
@@ -57,7 +59,7 @@ describe("ConversationModeView", () => {
     const onExit = vi.fn();
     const user = userEvent.setup();
     render(
-      <ConversationModeView onExit={onExit} onResearch={mockResearch} sttAdapter={adapters.stt} ttsAdapter={adapters.tts} />,
+      <ConversationModeView conversationId={mockConversationId} onExit={onExit} onResearch={mockResearch} sttAdapter={adapters.stt} ttsAdapter={adapters.tts} />,
     );
     await user.click(
       screen.getByRole("button", { name: /exit conversation mode/i }),
@@ -68,7 +70,7 @@ describe("ConversationModeView", () => {
   it("renders ConversationBubbles component", () => {
     const adapters = createMockAdapters();
     render(
-      <ConversationModeView onExit={() => {}} onResearch={mockResearch} sttAdapter={adapters.stt} ttsAdapter={adapters.tts} />,
+      <ConversationModeView conversationId={mockConversationId} onExit={() => {}} onResearch={mockResearch} sttAdapter={adapters.stt} ttsAdapter={adapters.tts} />,
     );
     expect(screen.getByText("No messages yet")).toBeInTheDocument();
   });

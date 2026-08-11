@@ -13,6 +13,7 @@ export interface UseVoiceAgentOptions {
   ttsAdapter: TTSAdapter;
   language?: string;
   onUserTranscriptFinal: (text: string) => void;
+  initialMessages?: ChatMessage[];
 }
 
 export interface UseVoiceAgentReturn {
@@ -42,17 +43,18 @@ type Handler<T extends RTVIEventType> = (data: RTVIEventMap[T]) => void;
 export function useVoiceAgent(
   options: UseVoiceAgentOptions,
 ): UseVoiceAgentReturn {
-  const { sttAdapter, ttsAdapter, language = "en", onUserTranscriptFinal } =
+  const { sttAdapter, ttsAdapter, language = "en", onUserTranscriptFinal, initialMessages = [] } =
     options;
 
   const [state, setState] = useState<AgentState>("idle");
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [error, setError] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
 
   const handlers = useRef<Map<RTVIEventType, Set<Handler<any>>>>(new Map());
   const isSpeakingRef = useRef(false);
   const isConnectingRef = useRef(false);
+  const transcriptBuffer = useRef<string>("");
 
   const emit = useCallback(
     <T extends RTVIEventType>(type: T, data: RTVIEventMap[T]) => {
@@ -89,6 +91,7 @@ export function useVoiceAgent(
   // Register STT/TTS event handlers ONCE via useEffect
   useEffect(() => {
     const handleTranscriptPartial = (data: RTVIEventMap["user-transcript-partial"]) => {
+      transcriptBuffer.current = data.text;
       const msgId = data.messageId;
       setMessages((prev) => {
         const existing = prev.find((m) => m.id === msgId);
@@ -109,6 +112,7 @@ export function useVoiceAgent(
     };
 
     const handleTranscriptFinal = (data: RTVIEventMap["user-transcript-final"]) => {
+      const finalizedText = transcriptBuffer.current || data.text;
       setMessages((prev) => {
         const existing = prev.find((m) => m.id === data.messageId);
         if (existing) {
@@ -121,13 +125,14 @@ export function useVoiceAgent(
           {
             id: data.messageId,
             role: "user",
-            text: data.text,
+            text: finalizedText,
             timestamp: Date.now(),
             status: "sent",
           },
         ];
       });
-      onUserTranscriptFinal(data.text);
+      onUserTranscriptFinal(finalizedText);
+      transcriptBuffer.current = "";
     };
 
     const handleSTTError = (data: RTVIEventMap["error"]) => {
@@ -176,6 +181,7 @@ export function useVoiceAgent(
     isSpeakingRef.current = false;
     isConnectingRef.current = false;
     setIsConnecting(false);
+    transcriptBuffer.current = "";
     setStateAndEmit("idle");
   }, [sttAdapter, setStateAndEmit]);
 
@@ -218,7 +224,7 @@ export function useVoiceAgent(
         );
       } finally {
         isSpeakingRef.current = false;
-        setStateAndEmit("idle");
+        setStateAndEmit("listening");
       }
     },
     [ttsAdapter, setStateAndEmit],

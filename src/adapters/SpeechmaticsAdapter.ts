@@ -7,6 +7,8 @@ export class SpeechmaticsAdapter implements STTAdapter {
   private handlers: Map<RTVIEventType, Set<Handler<any>>> = new Map();
   private ws: WebSocket | null = null;
   private currentMessageId: string | null = null;
+  private mediaStream: MediaStream | null = null;
+  private audioContext: AudioContext | null = null;
 
   onEvent<T extends RTVIEventType>(type: T, handler: Handler<T>) {
     if (!this.handlers.has(type)) this.handlers.set(type, new Set());
@@ -103,6 +105,9 @@ export class SpeechmaticsAdapter implements STTAdapter {
       await audioContext.resume();
       const source = audioContext.createMediaStreamSource(stream);
 
+      this.mediaStream = stream;
+      this.audioContext = audioContext;
+
       await audioContext.audioWorklet.addModule('/pcm-capture-worklet.js');
 
       const workletNode = new AudioWorkletNode(audioContext, 'pcm-capture-processor', {
@@ -147,6 +152,16 @@ export class SpeechmaticsAdapter implements STTAdapter {
       }
       this.ws = null;
     }
+
+    if (this.mediaStream) {
+      this.mediaStream.getTracks().forEach(track => track.stop());
+      this.mediaStream = null;
+    }
+    if (this.audioContext) {
+      this.audioContext.close().catch(() => {});
+      this.audioContext = null;
+    }
+
     this.currentMessageId = null;
   }
 }

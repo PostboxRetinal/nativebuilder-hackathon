@@ -138,6 +138,9 @@ describe("useVoiceAgent", () => {
     expect(result.current.messages).toHaveLength(1);
     expect(result.current.messages[0].role).toBe("agent");
     expect(result.current.messages[0].text).toBe("Hello world");
+    // After speak completes, state should be "listening" (not "idle") so orb shows activity
+    expect(result.current.state).toBe("listening");
+    expect(result.current.isListening).toBe(true);
   });
 
   it("resetMessages clears all messages", async () => {

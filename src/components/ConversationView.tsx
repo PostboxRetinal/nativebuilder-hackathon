@@ -105,6 +105,7 @@ function ConversationView({ conversationId }: ConversationViewProps): React.Reac
   if (inConversationMode) {
     return (
       <ConversationModeView
+        conversationId={conversationId}
         onExit={() => setInConversationMode(false)}
         onResearch={handleResearch}
         sttAdapter={createAdapters().stt}

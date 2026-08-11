@@ -61,11 +61,12 @@ describe("SpeechmaticsAdapter", () => {
     const { Mock: WebSocketMock } = createWsMock();
     (global as any).WebSocket = WebSocketMock;
 
+    const mockTrack = { stop: vi.fn() };
     vi.stubGlobal("navigator", {
       ...global.navigator,
       mediaDevices: {
         getUserMedia: vi.fn().mockResolvedValue({
-          getTracks: vi.fn().mockReturnValue([]),
+          getTracks: vi.fn().mockReturnValue([mockTrack]),
         }),
       },
     });
@@ -77,6 +78,53 @@ describe("SpeechmaticsAdapter", () => {
 
     await adapter.start("en");
     expect(WebSocketMock).not.toHaveBeenCalled();
+  });
+
+  it("stop() calls track.stop() on all tracks", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({ token: "test-jwt-123" }),
+    });
+
+    const mockTrack1 = { stop: vi.fn() };
+    const mockTrack2 = { stop: vi.fn() };
+    const mockStream = {
+      getTracks: vi.fn().mockReturnValue([mockTrack1, mockTrack2]),
+    };
+    
+    vi.stubGlobal("navigator", {
+      mediaDevices: {
+        getUserMedia: vi.fn().mockResolvedValue(mockStream),
+      },
+    });
+
+    const { Mock: WebSocketMock } = createWsMock();
+    (global as any).WebSocket = WebSocketMock;
+
+    const audioContextCloseFn = vi.fn().mockResolvedValue(undefined);
+    const audioContextMock = vi.fn().mockImplementation(function () {
+      return {
+        sampleRate: 16000,
+        resume: vi.fn().mockResolvedValue(undefined),
+        createMediaStreamSource: vi.fn().mockReturnValue({ connect: vi.fn() }),
+        audioWorklet: { addModule: vi.fn().mockResolvedValue(undefined) },
+        close: audioContextCloseFn,
+      };
+    });
+    (global as any).AudioContext = audioContextMock;
+    (global as any).AudioWorkletNode = vi.fn().mockImplementation(function () {
+      return { port: { onmessage: null }, connect: vi.fn() };
+    });
+
+    // Call start and await it
+    await adapter.start("en");
+    
+    // Call stop
+    adapter.stop();
+
+    expect(mockTrack1.stop).toHaveBeenCalled();
+    expect(mockTrack2.stop).toHaveBeenCalled();
+    expect(audioContextCloseFn).toHaveBeenCalled();
   });
 
   it("WebSocket URL contains JWT query parameter", async () => {

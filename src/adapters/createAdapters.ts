@@ -9,8 +9,8 @@ export function createAdapters() {
     cachedStt = new SpeechmaticsAdapter();
   }
   if (!cachedTts) {
-    const fishReferenceId = import.meta.env.VITE_FISH_AUDIO_REFERENCE_ID;
-    cachedTts = new FishAudioTTSAdapter("", fishReferenceId || undefined);
+    // reference_id is now configured as FISH_AUDIO_REFERENCE_ID secret in Supabase
+    cachedTts = new FishAudioTTSAdapter("");
   }
   return { stt: cachedStt, tts: cachedTts };
 }

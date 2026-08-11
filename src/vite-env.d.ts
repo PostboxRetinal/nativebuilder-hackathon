@@ -2,10 +2,6 @@
 
 declare const __APP_VERSION__: string;
 
-interface ImportMetaEnv {
-  readonly VITE_FISH_AUDIO_REFERENCE_ID?: string;
-}
-
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }

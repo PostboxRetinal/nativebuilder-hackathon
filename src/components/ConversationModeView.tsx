@@ -1,11 +1,14 @@
 import { useState, useRef, useCallback } from "react";
 import type { STTAdapter, TTSAdapter } from "../types/rtvi";
 import { useVoiceAgent } from "../hooks/useVoiceAgent";
+import { useMessages } from "../hooks/useMessages";
 import { ConversationBubbles } from "./ConversationBubbles";
 import ConversationOrb from "./ConversationOrb";
 import ModelSelector from "./ModelSelector";
+import type { ChatMessage } from "../types/rtvi";
 
 interface ConversationModeViewProps {
+  conversationId: string;
   onExit: () => void;
   onResearch: (text: string, model?: string) => Promise<string>;
   sttAdapter: STTAdapter;
@@ -13,6 +16,7 @@ interface ConversationModeViewProps {
 }
 
 export default function ConversationModeView({
+  conversationId,
   onExit,
   onResearch,
   sttAdapter,
@@ -21,6 +25,9 @@ export default function ConversationModeView({
   const [model, setModel] = useState<string | null>(null);
   const lastSpokenRef = useRef<string>("");
   const lastResponseRef = useRef<string>("");
+  const { addMessage } = useMessages(conversationId);
+
+  const initialMessages: ChatMessage[] = [];
 
   const {
     state,
@@ -37,7 +44,9 @@ export default function ConversationModeView({
     sttAdapter,
     ttsAdapter,
     language: "en",
+    initialMessages,
     onUserTranscriptFinal: async (text) => {
+      await addMessage("user", text);
       const response = await onResearch(text, model ?? undefined);
       if (!response) return;
       if (
@@ -49,6 +58,7 @@ export default function ConversationModeView({
       }
       lastResponseRef.current = response;
       lastSpokenRef.current = response;
+      await addMessage("assistant", response);
       await speak(response);
     },
   });
@@ -56,7 +66,7 @@ export default function ConversationModeView({
   const isProcessing = state === "processing";
 
   const toggleConversation = useCallback(() => {
-    if (state === "speaking") { stopSpeaking(); stopListening(); }
+    if (state === "speaking") { stopSpeaking(); }
     else if (state === "listening") { stopListening(); }
     else if (state === "processing") { /* noop */ }
     else { startListening(); }

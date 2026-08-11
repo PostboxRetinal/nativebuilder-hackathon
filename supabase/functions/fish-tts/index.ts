@@ -27,7 +27,9 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    let body: { text: string; reference_id?: string; model?: string };
+    const referenceId = Deno.env.get("FISH_AUDIO_REFERENCE_ID");
+
+    let body: { text: string; model?: string };
     try {
       body = await req.json();
     } catch {
@@ -55,7 +57,7 @@ Deno.serve(async (req: Request) => {
       },
       body: JSON.stringify({
         text: body.text.slice(0, 500),
-        reference_id: body.reference_id ?? undefined,
+        reference_id: referenceId ?? undefined,
         model: selectedModel,
         format: "mp3",
         latency: "balanced",
